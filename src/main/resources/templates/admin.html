@@ -93,6 +93,31 @@
 
 <script>
 function showFile(inp){ if(inp.files[0]){ document.getElementById('fileName').innerText = inp.files[0].name + ' (' + Math.round(inp.files[0].size/1024) + ' KB)'; document.getElementById('fileName').classList.remove('hidden'); document.getElementById('dropText').classList.add('hidden'); } }
+const uploadDrop = document.querySelector('.upload-drop');
+const fileInput = document.getElementById('file');
+let dragDepth = 0;
+uploadDrop.addEventListener('dragenter', (e)=>{
+  e.preventDefault();
+  dragDepth++;
+  uploadDrop.classList.add('drag-over');
+});
+uploadDrop.addEventListener('dragover', (e)=>e.preventDefault());
+uploadDrop.addEventListener('dragleave', (e)=>{
+  e.preventDefault();
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) uploadDrop.classList.remove('drag-over');
+});
+uploadDrop.addEventListener('drop', (e)=>{
+  e.preventDefault();
+  dragDepth = 0;
+  uploadDrop.classList.remove('drag-over');
+  const droppedFile = e.dataTransfer.files[0];
+  if (!droppedFile) return;
+  const transfer = new DataTransfer();
+  transfer.items.add(droppedFile);
+  fileInput.files = transfer.files;
+  showFile(fileInput);
+});
 document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const button = document.getElementById('uploadButton');

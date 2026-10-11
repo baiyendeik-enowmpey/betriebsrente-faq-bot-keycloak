@@ -102,6 +102,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .section-description { margin: 5px 0 17px; color: var(--muted); font-size: 11px; line-height: 1.55; }
 .upload-drop { min-height: 128px; display: grid; place-items: center; padding: 20px; border: 1px dashed #cbd5e1; border-radius: 13px; background: #fbfcfe; color: var(--brand); text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
 .upload-drop:hover, .upload-drop:focus-within { border-color: var(--brand); background: var(--brand-soft); }
+.upload-drop.drag-over { border-color: var(--brand); background: var(--brand-soft); }
 .upload-drop strong { display: block; font-size: 12px; }
 .upload-drop span { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; }
 .file-name { margin-top: 8px; color: var(--brand); font-size: 11px; font-weight: 650; }
