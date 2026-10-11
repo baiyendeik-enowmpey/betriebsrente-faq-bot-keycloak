@@ -1,0 +1,56 @@
+{
+  "realm": "betriebsrente",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "USER", "description": "May use the pension FAQ chat" },
+      { "name": "ADMIN", "description": "May manage the app and its knowledge base" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "${KEYCLOAK_CLIENT_ID}",
+      "name": "Betriebsrente FAQ Bot",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KEYCLOAK_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8091/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [
+        "http://localhost:8091"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8091/*"
+      },
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+    }
+  ],
+  "users": [
+    {
+      "username": "fachbereich",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD}", "temporary": false }
+      ],
+      "realmRoles": ["ADMIN", "USER"]
+    },
+    {
+      "username": "team",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "${KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD}", "temporary": false }
+      ],
+      "realmRoles": ["USER"]
+    }
+  ]
+}

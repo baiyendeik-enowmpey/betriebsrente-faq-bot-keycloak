@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <title>Wissensbasis verwalten · Betriebsrente Bot</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="workspace-shell">
+  <aside class="reference-sidebar">
+    <div class="reference-sidebar-head">
+      <div class="reference-brand">
+        <div class="reference-mark" aria-hidden="true">BR</div>
+        <div class="reference-brand-copy"><h1>Renten-Fachbot</h1><p>Fachbereich Rente · Intern</p></div>
+        <span class="local-tag">Lokal · Docker</span>
+      </div>
+      <nav class="reference-tabs" aria-label="Bereiche">
+        <a class="reference-tab" th:href="@{/}">◉&nbsp; Chat</a>
+        <a class="reference-tab active" th:href="@{/admin}" aria-current="page">▤&nbsp; Wissen</a>
+      </nav>
+    </div>
+
+    <section class="reference-section">
+      <span class="reference-section-title">Wissensverwaltung</span>
+      <p class="admin-sidebar-copy">Hier pflegen Sie das Fachwissen. Neue Dokumente sind nach dem Import in der Chat-Suche verfügbar.</p>
+      <div class="admin-sidebar-stats">
+        <div class="admin-sidebar-stat"><strong th:text="${docCount}">0</strong><span>Dokumente</span></div>
+        <div class="admin-sidebar-stat"><strong th:text="${chunkCount}">0</strong><span>Textabschnitte</span></div>
+      </div>
+      <div class="reference-note"><strong>Import-Hinweis</strong>Bitte geben Sie für jedes Dokument eine aussagekräftige Kategorie und Quelle an. Unterstützt werden PDF, Word, Text und Markdown.</div>
+    </section>
+
+    <footer class="reference-footer">
+      <span class="status-dot" aria-hidden="true"></span><span>Lokal · Docker · Spring Boot</span>
+      <form class="logout-form" method="post" th:action="@{/logout}"><button class="button-secondary" type="submit">Abmelden</button></form>
+    </footer>
+  </aside>
+
+  <main class="reference-main">
+    <header class="reference-pagebar">
+      <h2>Wissensbasis verwalten</h2>
+      <span class="reference-live"><span class="status-dot"></span><span th:text="|${docCount} freigegeben|">0 freigegeben</span></span>
+    </header>
+
+    <div class="admin-reference-content">
+      <section class="surface-card admin-form-card">
+        <div class="admin-form-title"><div class="reference-mark" aria-hidden="true">＋</div><h3 class="section-heading">Neues Dokument anlegen</h3></div>
+        <p class="section-description" style="margin-top:10px">Dokument importieren und für den Chat durchsuchbar machen.</p>
+        <form id="uploadForm" method="post" th:action="@{/admin/upload}" enctype="multipart/form-data">
+          <label class="upload-drop" for="file">
+            <span aria-hidden="true" style="font-size:22px">↑</span>
+            <strong id="dropText">Datei auswählen oder hier ablegen</strong>
+            <span>PDF · DOCX · DOC · TXT · MD</span>
+            <input type="file" id="file" name="file" accept=".pdf,.docx,.doc,.txt,.md" hidden onchange="showFile(this)"/>
+            <span id="fileName" class="file-name hidden"></span>
+          </label>
+          <div class="form-grid">
+            <div class="form-field"><label class="field-label" for="titel">Titel <span style="font-weight:400;color:#a1a1aa">(optional)</span></label><input id="titel" name="titel" class="text-field" placeholder="z. B. BetrAVG Auszahlungsrichtlinie"/></div>
+            <div class="form-field"><label class="field-label" for="quelle">Quelle</label><input id="quelle" name="quelle" class="text-field" placeholder="z. B. BetrAVG § 3"/></div>
+            <div class="form-field"><label class="field-label" for="kategorie">Kategorie *</label><select id="kategorie" name="kategorie" class="select-field"><option>Auszahlung</option><option>Steuer</option><option>Unverfallbarkeit</option><option>Arbeitgeberwechsel</option><option>Recht</option><option>Prozess</option></select></div>
+          </div>
+          <button id="uploadButton" type="submit" class="button button-primary upload-submit">
+            <svg id="uploadSpinner" class="hidden animate-spin" style="width:17px;height:17px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity:.8" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+            <span id="uploadButtonText">Importieren &amp; Chunking starten</span>
+          </button>
+        </form>
+        <div id="status" class="status-box hidden"></div>
+      </section>
+
+      <section class="documents-column">
+        <div class="documents-column-head">
+          <h3>Freigegebene Dokumente <span th:text="|(${docCount})|">(0)</span></h3>
+          <span class="eyebrow">Durchsuchbar im Bot</span>
+        </div>
+        <article class="document-card" th:each="d : ${dokumente}">
+          <div class="document-card-head">
+            <div>
+              <div class="document-card-meta"><span class="category-tag document-kind" th:text="${d.kategorie}"></span><span class="document-source" th:text="${d.quelle}"></span></div>
+              <h4 th:text="${d.titel}"></h4>
+            </div>
+            <button class="button-secondary document-delete" th:attr="data-id=${d.id}" onclick="loeschen(this)">Löschen</button>
+          </div>
+          <p><span th:text="${#strings.length(d.originalText)}">0</span> Zeichen im importierten Dokument</p>
+        </article>
+        <div class="empty-sources" th:if="${#lists.isEmpty(dokumente)}">Noch keine Dokumente in der Wissensbasis.</div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+function showFile(inp){ if(inp.files[0]){ document.getElementById('fileName').innerText = inp.files[0].name + ' (' + Math.round(inp.files[0].size/1024) + ' KB)'; document.getElementById('fileName').classList.remove('hidden'); document.getElementById('dropText').classList.add('hidden'); } }
+document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const button = document.getElementById('uploadButton');
+  if (button.disabled) return;
+  const spinner = document.getElementById('uploadSpinner');
+  const buttonText = document.getElementById('uploadButtonText');
+  button.disabled = true;
+  spinner.classList.remove('hidden');
+  buttonText.innerText = 'Import läuft…';
+  const fd = new FormData(e.target);
+  const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+  const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+  const st = document.getElementById('status'); st.classList.remove('hidden'); st.className='status-box status-pending'; st.innerText='Parsing + Chunking (650 Tokens, 20% Overlap) + Embedding mit nomic-embed-text...';
+  let imported = false;
+  try {
+    const res = await fetch('/admin/upload',{method:'POST', headers:{[csrfHeader]:csrfToken}, body: fd});
+    const data = await res.json();
+    if(res.ok && data.success){
+      imported = true;
+      st.className='status-box status-success'; st.innerText = data.message;
+      setTimeout(()=>location.reload(),1500);
+    } else {
+      st.className='status-box status-error'; st.innerText = 'Fehler: ' + (data.error||`HTTP ${res.status}`);
+    }
+  } catch (error) {
+    st.className='status-box status-error'; st.innerText = 'Fehler beim Import: ' + error.message;
+  } finally {
+    if (!imported) {
+      button.disabled = false;
+      spinner.classList.add('hidden');
+      buttonText.innerText = 'Importieren & Chunking starten';
+    }
+  }
+});
+async function loeschen(btn){ if(!confirm('Wirklich löschen? Chunks + Vektoren werden entfernt.')) return; const id=btn.getAttribute('data-id'); const csrfToken=document.querySelector('meta[name="_csrf"]').content; const csrfHeader=document.querySelector('meta[name="_csrf_header"]').content; const res=await fetch('/admin/'+id,{method:'DELETE',headers:{[csrfHeader]:csrfToken}}); location.reload(); }
+</script>
+</body>
+</html>

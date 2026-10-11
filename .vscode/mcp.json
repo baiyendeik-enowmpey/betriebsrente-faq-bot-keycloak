@@ -1,0 +1,33 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "postgres-url",
+      "description": "PostgreSQL connection URL for the local betriebsrente database (postgresql://user:password@localhost:5444/betriebsrente)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "${input:postgres-url}"
+      ]
+    }
+  }
+}

@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: betriebsrente
+      POSTGRES_USER: botuser
+      POSTGRES_PASSWORD: lokal_sicher_123
+    ports: ["5445:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U botuser -d betriebsrente"]
+      interval: 5s
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_LOAD_TIMEOUT: 10m
+    ports: ["11435:11434"]
+    volumes: [ollama_data:/root/.ollama]
+  keycloak-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak-local-db-password}
+    volumes: [keycloak_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 5s
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.3
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-keycloak-admin-change-this}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-local-keycloak-client-secret}
+      KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD:-Betriebsrente2024!}
+      KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD: ${KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD:-Willkommen2024!}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak-local-db-password}
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: http://localhost:8180
+    ports: ["8180:8080"]
+    volumes:
+      - ./keycloak/realm:/opt/keycloak/data/import:ro
+    depends_on:
+      keycloak-db: {condition: service_healthy}
+  app:
+    build: .
+    depends_on:
+      postgres: {condition: service_healthy}
+      keycloak: {condition: service_started}
+    ports: ["8091:8090"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/betriebsrente
+      SPRING_DATASOURCE_USERNAME: botuser
+      SPRING_DATASOURCE_PASSWORD: lokal_sicher_123
+      SPRING_AI_OLLAMA_BASE_URL: http://ollama:11434
+      KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/betriebsrente
+      KEYCLOAK_BACKCHANNEL_ISSUER_URI: http://keycloak:8080/realms/betriebsrente
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-betriebsrente-app}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-local-keycloak-client-secret}
+volumes:
+  pgdata:
+  ollama_data:
+  keycloak_data:

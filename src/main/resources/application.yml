@@ -1,0 +1,43 @@
+server: {port: 8090}
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5445/betriebsrente}
+    username: ${SPRING_DATASOURCE_USERNAME:botuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:lokal_sicher_123}
+  jpa:
+    hibernate.ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  ai:
+    ollama:
+      base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11435}
+      chat:
+        options:
+          model: llama3.2:3b
+          temperature: 0.2
+          num-predict: 128
+      embedding:
+        options:
+          model: nomic-embed-text
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 768
+        remove-existing-vector-store-table: false
+app:
+  chunk: {size: 650, overlap: 130}
+  keycloak:
+    issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/betriebsrente}
+    backchannel-issuer-uri: ${KEYCLOAK_BACKCHANNEL_ISSUER_URI:http://keycloak:8080/realms/betriebsrente}
+    client-id: ${KEYCLOAK_CLIENT_ID:betriebsrente-app}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET:local-keycloak-client-secret}
+  ocr:
+    enabled: true
+    language: deu+eng
+    min-chars-threshold: 200

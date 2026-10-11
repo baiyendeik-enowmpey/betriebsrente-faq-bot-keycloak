@@ -1,0 +1,298 @@
+[
+  {
+    "titel": "Auszahlung Direktzusage - Einmalkapital",
+    "kategorie": "Auszahlung",
+    "quelle": "BetrAVG §3, EStG §22 Nr.5",
+    "original_text": "Direktzusage: Wahlrecht Rente oder Kapital. Kapitalantrag 5 Jahre vorher schriftlich. Voraussetzung Zusage sieht Option vor. Unverfallbarkeit nach 21 Jahre + 3 Jahre Betriebszugehoerigkeit."
+  },
+  {
+    "titel": "Versteuerung Einmalkapital",
+    "kategorie": "Steuer",
+    "quelle": "EStG §22, §34",
+    "original_text": "Einmalkapital gilt als sonstige Einkuenfte §22 Nr.5 EStG. Versorgungsfreibetrag nach §19 gilt NUR fuer Rente, NICHT fuer Kapital. Fuer Kapital kann Fuenftelregelung §34 beantragt werden wenn ueber 10 Jahre aufgebaut und zusammengeballt. KV: Beitragspflicht verteilt auf 120 Monate nach §229 SGB V."
+  },
+  {
+    "titel": "Arbeitgeberwechsel",
+    "kategorie": "Arbeitgeberwechsel",
+    "quelle": "BetrAVG §1b",
+    "original_text": "Unverfallbar wenn bei Ausscheiden 21 Jahre alt und Zusage 3 Jahre bestand. Neuer Arbeitgeber kann uebernehmen, abfinden bei Bagatellgrenze 1% Bezugsgröße oder uebertragen nach §4 BetrAVG auf Pensionsfonds."
+  },
+  {
+    "titel": "Rente vs Kapital",
+    "kategorie": "Auszahlung",
+    "quelle": "FB-2023-04",
+    "original_text": "Rente: monatlich, Lohnsteuer mit Versorgungsfreibetrag jahrgangsabhaengig 2024 max 13.6% bzw 1020 EUR + 306 EUR. Kapital: einmalig kein Freibetrag dafuer Fuenftelregelung. Entscheidung unwiderruflich. Beratungspflicht Arbeitgeber: muss informieren darf keine Steuerberatung leisten."
+  },
+  {
+    "titel": "Grundlage Zahlstellen-Meldeverfahren",
+    "kategorie": "Grundlagen",
+    "quelle": "ZMV-2026-01",
+    "original_text": "Zahlstellen-Meldeverfahren (ZMV): Gesetzlich vorgeschriebener (§ 202 SGB V) elektronischer Datenaustausch zwischen Zahlstellen (Arbeitgeber, Kassen) und Krankenkassen zur Beitragsermittlung und -abführung. Kinderleicht erklärt: Eine digitale Brieftaube, die zwischen Firma und Krankenkasse fliegt, um Omas Betriebsrenten-Beiträge automatisch zu regeln, ohne dass sie selbst Zettel wegbringen muss."
+  },
+  {
+    "titel": "Meldepflichtige Versorgungsbezüge",
+    "kategorie": "Grundlagen",
+    "quelle": "ZMV-2026-02",
+    "original_text": "Meldepflichtig nach § 229 SGB V sind betriebliche Altersversorgung (Direktzusagen, Pensionskassen, Unterstützungskassen, Direktversicherungen), öffentlich-rechtliche Pensionen und berufsständische Versorgungsbezüge. Kinderleicht erklärt: Jedes Extra-Taschengeld, das ältere Menschen als Unterstützung für ihren Ruhestand von früheren Firmen oder Versicherungen bekommen, muss digital gemeldet werden."
+  },
+  {
+    "titel": "Einrichtung für Unternehmen",
+    "kategorie": "Einrichtung",
+    "quelle": "ZMV-2026-03",
+    "original_text": "Einrichtung: Zahlstelle benötigt eigene 8-stellige Zahlstellennummer (über ITSG/ARGE IK). Übermittlung zwingend via zertifizierte Entgeltsoftware oder verschlüsselt über das SV-Meldeportal (www.sv-meldeportal.de). Kinderleicht erklärt: Die Firma besorgt sich eine eigene 8-stellige Computer-Telefonnummer und nutzt ein sicheres Internet-Portal, um die Nachrichten ohne Papier zu verschicken."
+  },
+  {
+    "titel": "Grenzwerte und Freibeträge 2026",
+    "kategorie": "Beiträge",
+    "quelle": "ZMV-2026-04",
+    "original_text": "Grenzwerte 2026: Krankenversicherung Freibetrag von 197,75 EUR/Monat (nur der darüber liegende Teil ist beitragspflichtig). Pflegeversicherung Freigrenze von 197,75 EUR/Monat (bei Überschreiten ab 197,76 EUR wird der gesamte Betrag beitragspflichtig). Kinderleicht erklärt: Bei unter 197,75 Euro im Monat darf Oma jeden Cent behalten. Wird es mehr, muss sie etwas abgeben – bei der Krankenversicherung aber nur vom Extra-Teil über der Grenze."
+  },
+  {
+    "titel": "Gesetzliche Meldefristen",
+    "kategorie": "Fristen",
+    "quelle": "ZMV-2026-05",
+    "original_text": "Meldefristen: Beginn des Versorgungsbezugs unverzüglich, spätestens innerhalb eines Monats nach Bewilligung. Änderungen (z.B. Rentenanpassung) bis zum Beginn des Folgemonats. Ende des Bezugs innerhalb eines Monats. Kinderleicht erklärt: Der Chef darf nicht trödeln und muss der Krankenkasse immer sofort, spätestens aber innerhalb von vier Wochen Bescheid sagen, wenn sich Omas Geld ändert."
+  },
+  {
+    "titel": "Technischer Ablauf DSVZ-Verfahren",
+    "kategorie": "Technik",
+    "quelle": "ZMV-2026-06",
+    "original_text": "Technischer Ablauf: Dialogverfahren via Gesamtdatensatz DSVZ. Zahlstelle meldet Bezug (Baustein DBZK) mit Steuer-ID und Krankenversicherungsnummer. Krankenkasse prüft Mehrfachbezüge und sendet Beitragswerte (Baustein DBKZ) zurück. Kinderleicht erklärt: Der Firmen-Computer schickt Omas geheime Steuernummer an die Kasse. Die Kasse rechnet in einer Sekunde aus, wie viel Geld abgezogen werden muss, und schickt die Antwort digital zurück."
+  },
+  {
+    "titel": "Fehlermeldungen und Troubleshooting",
+    "kategorie": "Technik",
+    "quelle": "ZMV-2026-07",
+    "original_text": "Troubleshooting: Bei unvollständigen Daten (fehlende Steuer-ID) oder falscher Krankenkasse meldet das System einen Fehlercode. Zahlstelle muss Datensatz korrigieren, ggf. stornieren und neu übermitteln. Aktionstipp: Steuer-ID, Versicherungsnummer und aktuelle Mitgliedsbescheinigung prüfen. Kinderleicht erklärt: Wenn der Computer einen Tippfehler macht, meckert der Kassen-Computer. Der Chef muss den Fehler suchen und die Nachricht korrigiert abschicken."
+  },
+  {
+    "titel": "Grundlage DaBPV-Verfahren",
+    "kategorie": "Grundlagen",
+    "quelle": "DaBPV-2026-01",
+    "original_text": "DaBPV bedeutet 'Datenaustauschverfahren zur Beitragsdifferenzierung in der sozialen Pflegeversicherung' nach § 55c SGB XI. Es dient dem digitalen Nachweis der Elterneigenschaft und Kinderanzahl. Kinderleicht erklärt: Ein automatischer Computer-Check beim Staat, der dem Chef verrät, wie viele Kinder ein Mitarbeiter hat, damit die Kosten für die Pflegekasse fehlerfrei ausgerechnet werden."
+  },
+  {
+    "titel": "Verpflichtender Einsatz & Fristen",
+    "kategorie": "Fristen",
+    "quelle": "DaBPV-2026-02",
+    "original_text": "Die Nutzung des DaBPV ist seit dem 01.07.2025 für alle Arbeitgeber und Zahlstellen verpflichtend. Der Initialabruf für alle Bestandsfälle musste bis zum 31.12.2025 abgeschlossen sein. Bei Neueinstellungen muss die Abfrage zwingend innerhalb von 7 Tagen erfolgen. Kinderleicht erklärt: Seit Mitte 2025 darf kein Chef mehr Zettel dafür verlangen. Stellt er jemanden neu ein, muss er innerhalb von einer Woche den Computer-Abruf starten."
+  },
+  {
+    "titel": "Technischer Ablauf und Behörden",
+    "kategorie": "Technik",
+    "quelle": "DaBPV-2026-03",
+    "original_text": "Der Datenstrom fließt von der Entgeltsoftware der Zahlstelle über die Datenstelle der Rentenversicherung (DSRV) und die ZfA an das Bundeszentralamt für Steuern (BZSt). Das BZSt liefert anhand der Steuer-ID die Elterneigenschaft, Kinderanzahl und relevanten Gültigkeitszeiträume zurück. Kinderleicht erklärt: Der Firmen-Computer funkt die Rentenversicherung an, die fragt beim großen Steuer-Amt nach, und das Amt schickt die Antwort sekundenschnell zurück."
+  },
+  {
+    "titel": "Das DaBPV Abonnement-Prinzip",
+    "kategorie": "Technik",
+    "quelle": "DaBPV-2026-04",
+    "original_text": "Mit der ersten Bestands- oder Erstanfrage wird im DaBPV automatisch ein elektronisches Abonnement (Push-Verfahren) eingerichtet. Das BZSt meldet Änderungen bei der Kinderanzahl oder dem Ablauf von Altersgrenzen (25. Lebensjahr) fortan proaktiv an die Zahlstelle. Kinderleicht erklärt: Das System funktioniert wie ein Netflix-Abo. Einmal angemeldet, schickt das Amt bei jeder Änderung (z. B. wenn ein neues Baby geboren wird) ganz von alleine eine Nachricht."
+  },
+  {
+    "titel": "Ausnahmen und manuelle Nachweise",
+    "kategorie": "Ausnahmen",
+    "quelle": "DaBPV-2026-05",
+    "original_text": "Das DaBPV deckt nicht alle Fälle ab. Manuelle Nachweise (z. B. Geburtsurkunden) sind weiterhin nötig bei privat Versicherten, bestimmten Werkstudenten/Praktikanten oder im Ausland geborenen Kindern, die steuerlich noch nicht vom BZSt erfasst wurden. Kinderleicht erklärt: Wenn ein Kind im Ausland geboren wurde und das deutsche Amt es noch gar nicht kennt, greift die Automatik nicht. Dann gilt die Ausnahme: Papier-Urkunde mitbringen!"
+  },
+  {
+    "titel": "ZMV: Grundlagen für neue Kollegen",
+    "kategorie": "Onboarding_ZMV",
+    "quelle": "ZMV-Handbuch-SGB-V",
+    "original_text": "Das Zahlstellen-Meldeverfahren (ZMV) regelt nach § 202 SGB V den elektronischen Datenaustausch mit den gesetzlichen Krankenkassen. Sobald wir eine Betriebsrente, Pension oder eine einmalige Kapitalleistung auszahlen, müssen wir dies melden. Praxis-Tipp: Bei Neueintritten von Rentenempfängern erheben wir zwingend die Krankenkasse und die Steuer-ID. Ohne diese Daten blockiert die Entgeltsoftware den automatischen Melde-Dialog."
+  },
+  {
+    "titel": "ZMV: Die 4 Meldegründe im System",
+    "kategorie": "Abrechnung_Praxis",
+    "quelle": "GKV-Verfahrensbeschreibung",
+    "original_text": "Im ZMV-System nutzen wir den Datensatz DSVZ mit dem Baustein DBZK. Es gibt vier relevante Abgabegründe für uns als Sachbearbeiter: 1 = Bewilligung/Beginn des Versorgungsbezugs, 2 = Änderung des laufenden Bezugs (z. B. jährliche Rentenanpassung), 3 = Ende des Bezugs (z. B. bei Tod des Rentners), 5 = Vorabbescheinigung (optional vor Rentenbeginn zur Klärung der Kasse). Praxis-Tipp: Jede Änderung muss bis zum Beginn des Folgemonats im System erfasst sein."
+  },
+  {
+    "titel": "ZMV: Freibetrag vs Freigrenze KV/PV 2026",
+    "kategorie": "Beitragsberechnung",
+    "quelle": "Rechengroessen-2026",
+    "original_text": "Wichtiger Prüfschritt bei der Entgeltabrechnung 2026: Der gesetzliche Grenzwert liegt bei 197,75 EUR/Monat. In der Krankenversicherung (KV) ist dies ein Freibetrag (nur der Teil über 197,75 EUR wird verbeitragt). In der Pflegeversicherung (PV) ist es eine Freigrenze: Liegt der Bezug bei 197,76 EUR (auch nur 1 Cent drüber), wird der *gesamte* Betrag PV-pflichtig! Praxis-Tipp: Das System rechnet dies automatisch, aber bei manuellen Korrekturen oder Mehrfachbezügen musst du diese Grenze im Kopf haben."
+  },
+  {
+    "titel": "ZMV: Umgang mit Kapitalleistungen",
+    "kategorie": "Abrechnung_Praxis",
+    "quelle": "§229-SGB-V",
+    "original_text": "Wird statt einer monatlichen Rente eine einmalige Kapitalleistung (Abfindung/Lebensversicherung) ausgezahlt, entfällt der KV-Freibetrag nicht. Die Summe wird rechnerisch auf 120 Monate (10 Jahre) aufgeteilt. Praxis-Tipp: Im System muss die Gesamtsumme und der Zeitraum hinterlegt werden. Die Software meldet monatlich 1/120 als fiktiven Bezug an die Krankenkasse, bis die 10 Jahre abgelaufen sind."
+  },
+  {
+    "titel": "DaBPV: Relevanz für die Rentenabteilung",
+    "kategorie": "Onboarding_DaBPV",
+    "quelle": "PUEG-§55c-SGB-XI",
+    "original_text": "Das DaBPV (Datenaustauschverfahren zur Beitragsdifferenzierung) ist seit dem 01.07.2025 gesetzliche Pflicht. Da sich der PV-Beitragssatz nach der Kinderanzahl richtet, müssen wir die Daten elektronisch abrufen. Praxis-Tipp: Du musst keine Geburtsurkunden mehr von den Rentnern anfordern! Das System holt sich die Kinderanzahl automatisch über die Steuer-ID beim Bundeszentralamt für Steuern (BZSt)."
+  },
+  {
+    "titel": "DaBPV: Fristen bei Neueinstellungen",
+    "kategorie": "Fristen",
+    "quelle": "DaBPV-Leitfaden",
+    "original_text": "Beim Onboarding eines neuen Rentenbeziehers gilt im DaBPV eine strikte Frist: Die elektronische Abfrage der Elterneigenschaft und Kinderanzahl beim Bundeszentralamt für Steuern (BZSt) muss zwingend innerhalb von 7 Tagen nach Beginn der Beitragspflicht erfolgen. Praxis-Tipp: Richte den DaBPV-Abruf am besten direkt am selben Tag ein, an dem du auch die ZMV-Beginnmeldung (Grund 1) erfasst."
+  },
+  {
+    "titel": "DaBPV: Das automatische Abo-Prinzip",
+    "kategorie": "Technik",
+    "quelle": "BZSt-Schnittstelle",
+    "original_text": "Das DaBPV arbeitet mit einem 'Push-Verfahren' (Abonnement). Sobald wir für einen Rentner die Erstabfrage senden, wird beim BZSt ein Abo eingerichtet. Wird ein weiteres Kind geboren oder fällt ein Kind wegen Altersgrenzen (25. Lebensjahr) aus dem Abschlag heraus, schickt das BZSt uns automatisch eine Änderungsmeldung. Praxis-Tipp: Erhältst du eine Systemmeldung vom BZSt, musst du den PV-Beitragssatz für den Folgemonat in den Stammdaten überprüfen – die Software passt den Abschlag in der Regel automatisch an."
+  },
+  {
+    "titel": "DaBPV: Ausnahmen (Wann Papier nötig ist)",
+    "kategorie": "Ausnahmen",
+    "quelle": "PUEG-Sonderfaelle",
+    "original_text": "Wann schlägt das automatische DaBPV fehl? Das BZSt liefert keine Daten bei im Ausland geborenen Kindern (die steuerlich in Deutschland noch nicht erfasst sind) sowie bei Stief- oder Adoptivkindern, wenn die Zuordnung beim Finanzamt unvollständig ist. Praxis-Tipp: Wenn der elektronische Abruf fehlschlägt oder der Rentner meldet, dass seine Kinder nicht berücksichtigt wurden, gilt die Nachweisfrist von 6 Monaten: Fordere die Geburtsurkunde oder steuerliche Nachweise manuell an und dokumentiere sie elektronisch in der Personalakte."
+  },
+  {
+    "titel": "ZMV/DaBPV: Fehlerbehebung bei Rückweisungen",
+    "kategorie": "Troubleshooting",
+    "quelle": "GKV-Fehlerkatalog",
+    "original_text": "Häufiger Fehler im Alltag: Eine Krankenkasse schickt eine Meldung mit einem Fehlercode (z. B. Person nicht versichert oder falsche Zahlstellennummer) zurück. Praxis-Tipp: 1. Prüfe, ob die Krankenkasse gewechselt wurde (aktuelle Mitgliedsbescheinigung anfordern). 2. Liegt ein Zahlendreher in der Steuer-ID oder Krankenversicherungsnummer vor? Datensatz im System korrigieren, die fehlerhafte Meldung stornieren und den korrigierten Datensatz neu senden."
+  },
+  {
+    "faq_id": "faq_001",
+    "titel": "ZMV: Grundlagen für neue Kollegen",
+    "kategorie": "Onboarding_ZMV",
+    "training_phrases": [
+      "Was mache ich bei einem neuen Renteneintritt?",
+      "Was ist das ZMV Verfahren für neue Kollegen?",
+      "Wie läuft die Erstanmeldung eines Rentners ab?",
+      "Welche Daten brauche ich zwingend für die ZMV Anmeldung?"
+    ]
+  },
+  {
+    "faq_id": "faq_002",
+    "titel": "ZMV: Die 4 Meldegründe im System",
+    "kategorie": "Abrechnung_Praxis",
+    "training_phrases": [
+      "Welchen Meldegrund wähle ich bei einer jährlichen Rentenanpassung?",
+      "Wann benutze ich den Meldegrund 1 und wann den Grund 3?",
+      "Was ist eine Vorabbescheinigung und wann brauche ich die?",
+      "Bis wann muss eine ZMV Änderung im System erfasst sein?"
+    ]
+  },
+  {
+    "faq_id": "faq_003",
+    "titel": "ZMV: Freibetrag vs Freigrenze KV/PV 2026",
+    "kategorie": "Beitragsberechnung",
+    "training_phrases": [
+      "Wie hoch ist der Freibetrag in der Krankenversicherung für 2026?",
+      "Gilt der Wert von 197,75 Euro auch für die Pflegeversicherung?",
+      "Warum wird bei 197,76 Euro plötzlich der ganze Betrag beitragspflichtig?",
+      "Wie rechnet das System den Freibetrag bei der Betriebsrente?"
+    ]
+  },
+  {
+    "faq_id": "faq_004",
+    "titel": "ZMV: Umgang mit Kapitalleistungen",
+    "kategorie": "Abrechnung_Praxis",
+    "training_phrases": [
+      "Wie melde ich eine Kapitalabfindung an die Krankenkasse?",
+      "Gilt die 1/120 Regelung bei einmaligen Auszahlungen?",
+      "Über welchen Zeitraum muss die Kapitalleistung aufgeteilt werden?",
+      "Was muss ich bei einer einmaligen Lebensversicherung im Abrechnungssystem eintragen?"
+    ]
+  },
+  {
+    "faq_id": "faq_005",
+    "titel": "DaBPV: Relevanz für die Rentenabteilung",
+    "kategorie": "Onboarding_DaBPV",
+    "training_phrases": [
+      "Muss ich mir für den Pflegebeitrag eine Geburtsurkunde geben lassen?",
+      "Wie rufe ich die Kinderanzahl für den Pflegebeitrag ab?",
+      "Was bedeutet DaBPV für die Abrechnung der Betriebsrente?",
+      "Wie weise ich die Elterneigenschaft elektronisch nach?"
+    ]
+  },
+  {
+    "faq_id": "faq_006",
+    "titel": "DaBPV: Fristen bei Neueinstellungen",
+    "kategorie": "Fristen",
+    "training_phrases": [
+      "Welche Frist gilt für den DaBPV Abruf bei einer Neueinstellung?",
+      "Kann ich das DaBPV Verfahren gleichzeitig mit der ZMV Meldung starten?",
+      "Bis wann muss ich die Kinderanzahl beim BZSt abfragen?",
+      "Wie viele Tage habe ich Zeit um das DaBPV bei Neueintritten zu starten?"
+    ]
+  },
+  {
+    "faq_id": "faq_007",
+    "titel": "DaBPV: Das automatische Abo-Prinzip",
+    "kategorie": "Technik",
+    "training_phrases": [
+      "Was bedeutet das automatische DaBPV Abo für den Folgemonat?",
+      "Wie funktioniert das Push Verfahren beim Bundeszentralamt für Steuern?",
+      "Was passiert im System wenn ein Rentner ein neues Kind bekommt?",
+      "Muss ich die Kinderanzahl jeden Monat neu abfragen?"
+    ]
+  },
+  {
+    "faq_id": "faq_008",
+    "titel": "DaBPV: Ausnahmen (Wann Papier nötig ist)",
+    "kategorie": "Ausnahmen",
+    "training_phrases": [
+      "Was mache ich wenn das Kind im Ausland geboren wurde?",
+      "Wann brauche ich trotz DaBPV einen manuellen Papiernachweis?",
+      "Wie trage ich Adoptivkinder oder Stiefkinder im System nach?",
+      "Was tun wenn das BZSt keine Kinderdaten für den Rentner liefert?"
+    ]
+  },
+  {
+    "faq_id": "faq_009",
+    "titel": "ZMV/DaBPV: Fehlerbehebung bei Rückweisungen",
+    "kategorie": "Troubleshooting",
+    "training_phrases": [
+      "Was bedeutet dieser Fehlercode von der Krankenkasse?",
+      "Der Datensatz wurde zurückgewiesen was muss ich tun?",
+      "Wie korrigiere und storniere ich eine fehlerhafte Meldung im System?",
+      "Wo prüfe ich ob der Rentner die Krankenkasse gewechselt hat?"
+    ]
+  },
+  {
+    "titel": "Welcome_Intent_New_Colleague",
+    "kategorie": "System_Dialog",
+    "quelle": "Chatbot-Onboarding-Core",
+    "original_text": "Hallo und herzlich willkommen im Team der Renten- und Pensionsauszahlung! 🚀 Ich bin dein digitaler Onboarding-Assistent für das Zahlstellen-Meldeverfahren (ZMV) und das DaBPV-Verfahren. Egal, ob du Fragen zu den Meldegründen, den aktuellen Grenzwerten für 2026 (wie dem Freibetrag von 197,75 EUR) oder zu Fehlermeldungen der Krankenkassen hast – tippe deine Frage einfach ein. Wie kann ich dir bei deiner aktuellen Abrechnung helfen?"
+  },
+  {
+    "titel": "Fallback_Intent_Level_1",
+    "kategorie": "System_Dialog",
+    "quelle": "Chatbot-Onboarding-Core",
+    "original_text": "Das habe ich leider nicht ganz verstanden. Da du neu im Team bist, formuliere deine Frage am besten mit typischen Fachbegriffen der Rentenabteilung. Suchst du Informationen zu einem bestimmten Meldegrund (z. B. Grund 1 oder 3), den Beitragsgrenzen für KV und PV oder dem automatischen Kinderdaten-Abruf über das DaBPV?"
+  },
+  {
+    "titel": "Fallback_Intent_Level_2_Escalation",
+    "kategorie": "System_Dialog",
+    "quelle": "Chatbot-Onboarding-Core",
+    "original_text": "Tut mir leid, auch dazu konnte ich in den aktuellen GKV-Verfahrensbeschreibungen und BZSt-Leitfäden keine direkte Antwort finden. Bevor im Abrechnungssystem ein Fehler passiert oder ein Datensatz falsch storniert wird, wende dich bitte direkt an deine Onboarding-Paten oder den Teamleiter. Notiere dir am besten den betroffenen Rentnerfall und die eventuelle Fehlermeldung aus der Software."
+  },
+  {
+    "titel": "ZMV: Fälligkeit und Beitragsnachweis",
+    "kategorie": "Beitragsnachweis",
+    "quelle": "§256-SGB-V-Faelligkeit",
+    "original_text": "Achtung bei der Terminplanung: Beiträge aus Versorgungsbezügen werden abweichend von aktiven Beschäftigten erst am 15. des Folgemonats fällig. Der Beitragsnachweis muss zwingend 2 Arbeitstage vor Fälligkeit (i. d. R. am 13. des Folgemonats) elektronisch per Datenübermittlung bei der Krankenkasse vorliegen. Praxis-Tipp: Bei Fristversäumnis drohen automatische Schätzungen der Beitragsschuld durch die Krankenkasse."
+  },
+  {
+    "titel": "ZMV: Inhalt des Zahlstellen-Beitragsnachweises",
+    "kategorie": "Beitragsnachweis",
+    "quelle": "GKV-Datensatz-BNZ",
+    "original_text": "Der Beitragsnachweis für Zahlstellen (Datensatz BNZ) übermittelt keine Personendaten, sondern die kumulierten Gesamtsummen der einbehaltenen Beiträge aller Rentner an die jeweilige Krankenkasse. Der kassenindividuelle Zusatzbeitrag muss dabei zwingend gesondert ausgewiesen werden. Praxis-Tipp: Stimmt die Summe im Beitragsnachweis nicht mit den Einzel-Rückmeldungen (Baustein DBKZ) der Krankenkasse überein, erzeugt die Kasse eine Differenzliste, die wir manuell abarbeiten müssen."
+  },{
+    "titel": "Beitragsnachweis an die Krankenkassen",
+    "kategorie": "Beitragsnachweis",
+    "quelle": "ZMV-2026-08",
+    "original_text": "Der Beitragsnachweis für Zahlstellen (Datensatz BNZ) übermittelt monatlich die summierten Kranken- und Pflegeversicherungsbeiträge aller Rentner an die jeweiligen Krankenkassen. Frist: Spätestens 2 Arbeitstage vor der Fälligkeit am 15. des Folgemonats. Praxis-Tipp: Da der kassenindividuelle Zusatzbeitrag separat ausgewiesen werden muss, gleicht die Software den BNZ automatisch mit den DBKZ-Rückmeldungen der Kassen ab. Bei Differenzen erzeugt das System ein Fehlerprotokoll, das manuell bereinigt werden muss."
+  },
+  {
+    "titel": "Beitragsnachweis und die Rentenversicherung (DRV)",
+    "kategorie": "Behörden",
+    "quelle": "ZMV-2026-09",
+    "original_text": "Die Deutsche Rentenversicherung (DRV) erhält von uns keine monatlichen Beitragsnachweise für Betriebsrentner. Allerdings überwacht die DRV im Rahmen der gesetzlichen Betriebsprüfung (spätestens alle 4 Jahre) die Einhaltung unserer ZMV-Meldepflichten und die korrekte Beitragsabführung. Praxis-Tipp: Halte alle elektronischen Protokolle, Abrechnungsnachweise und die 'Erklärungen zur Krankenkassenzugehörigkeit' der Versorgungsempfänger revisionssicher in der Digitalakte bereit."
+  },
+  {
+    "titel": "Datenübermittlung der Beiträge an das Finanzamt",
+    "kategorie": "Behörden",
+    "quelle": "ZMV-2026-10",
+    "original_text": "Zahlstellen übermitteln die einbehaltenen Beiträge zur KV und PV nicht direkt an das Finanzamt. Gemäß den steuerlichen Vorschriften meldet die gesetzliche Krankenkasse die vom Versicherten tatsächlich getragenen Beiträge direkt an die Finanzverwaltung für die Einkommensteuererklärung (Sonderausgabenabzug). Praxis-Tipp: Unsere Aufgabe als Zahlstelle beschränkt sich auf den korrekten Lohnsteuerabzug unter Berücksichtigung des jahrgangsabhängigen Versorgungsfreibetrags in der monatlichen Abrechnung."
+  }
+]

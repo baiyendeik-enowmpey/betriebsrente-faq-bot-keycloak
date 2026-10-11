@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anmelden · Renten-Fachbot</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="login-page">
+<main class="login-card">
+  <div class="login-brand">
+    <div class="brand-mark" aria-hidden="true">BR</div>
+    <div><h1 class="login-title">Renten-Fachbot</h1><p class="login-intro">Intern · nur Team &amp; Fachbereich</p></div>
+  </div>
+  <h2 class="login-heading">Willkommen zurück</h2>
+  <p class="login-description">Melden Sie sich an, um auf den Fachwissen-Assistenten zuzugreifen.</p>
+  <a id="keycloakLogin" class="button button-primary login-submit" th:href="@{/oauth2/authorization/keycloak}">Mit Keycloak anmelden</a>
+  <p class="login-footnote">Anmeldung und Benutzerverwaltung erfolgen über den zentralen Keycloak-Identity-Provider.</p>
+</main>
+</body>
+</html>

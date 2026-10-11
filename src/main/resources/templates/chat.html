@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <title>Betriebsrente FAQ Bot</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="workspace-shell">
+  <aside class="reference-sidebar">
+    <div class="reference-sidebar-head">
+      <div class="reference-brand">
+        <div class="reference-mark" aria-hidden="true">BR</div>
+        <div class="reference-brand-copy"><h1>Renten-Fachbot</h1><p>Fachbereich Rente · Intern</p></div>
+        <span class="local-tag">Lokal · Docker</span>
+      </div>
+      <nav class="reference-tabs" aria-label="Bereiche">
+        <a class="reference-tab active" th:href="@{/}" aria-current="page">◉&nbsp; Chat</a>
+        <a class="reference-tab" th:if="${isAdmin}" th:href="@{/admin}">▤&nbsp; Wissen</a>
+      </nav>
+    </div>
+
+    <section class="reference-section">
+      <label class="reference-section-title" for="kategorie">Kategorie Filter</label>
+      <select id="kategorie" class="select-field">
+        <option>Alle</option><option>Auszahlung</option><option>Steuer</option><option>Arbeitgeberwechsel</option>
+      </select>
+    </section>
+
+    <section class="reference-section">
+      <span class="reference-section-title">Häufige Fragen</span>
+      <div class="quick-question-list">
+        <button class="quick-question" type="button" data-question="Was ist das Rentenbezugsmitteilungsverfahren (RBM)?"><strong>Rentenbezugsmitteilung (RBM)</strong><span>Was ist das Verfahren und wozu dient es?</span></button>
+        <button class="quick-question" type="button" data-question="Wie wird eine Einmalkapitalzahlung aus der Betriebsrente versteuert?"><strong>Einmalkapital versteuern</strong><span>Welche steuerlichen Regeln gelten?</span></button>
+        <button class="quick-question" type="button" data-question="Was passiert mit meiner Betriebsrente bei einem Arbeitgeberwechsel?"><strong>Arbeitgeberwechsel</strong><span>Was passiert mit der Anwartschaft?</span></button>
+        <button class="quick-question" type="button" data-question="Wann ist eine Anwartschaft auf Betriebsrente unverfallbar?"><strong>Unverfallbarkeit</strong><span>Welche Fristen und Voraussetzungen gelten?</span></button>
+      </div>
+      <div class="reference-note"><strong>Hinweis für Fachbereich</strong>Antworten aus freigegebenen Dokumenten. Keine Rechtsberatung. Bei Zweifelsfällen die zugrunde liegende Fachinformation prüfen.</div>
+    </section>
+
+    <footer class="reference-footer">
+      <span class="status-dot" aria-hidden="true"></span><span>Lokal · Docker · Spring Boot</span>
+      <form class="logout-form" method="post" th:action="@{/logout}"><button class="button-secondary" type="submit">Abmelden</button></form>
+    </footer>
+  </aside>
+
+  <main class="reference-main">
+    <header class="reference-pagebar">
+      <h2>Frag das Fachwissen</h2>
+      <span class="reference-live"><span class="status-dot"></span> Live · Wissensbasis</span>
+    </header>
+    <div id="chatverlauf" class="chat-history" aria-live="polite">
+      <div class="welcome-card">
+        <div class="welcome-icon" aria-hidden="true">✳</div>
+        <h2>Hallo! Ich bin der Renten-Fachbot.</h2>
+        <p>Fragen Sie zur betrieblichen Altersversorgung. Ich antworte mit freigegebenem Fachwissen und zeige die verwendeten Quellen an.</p>
+      </div>
+    </div>
+    <div class="chat-composer reference-composer">
+      <div class="composer-inner">
+        <input id="frage" class="question-input" placeholder="Frage zur Rentenzahlung stellen…" onkeydown="if(event.key==='Enter') senden()" autocomplete="off">
+        <button id="senden" class="button button-primary send-button" type="button" onclick="senden()">
+          <span id="sendenText">Senden</span>
+          <svg id="sendenSpinner" class="hidden animate-spin" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity:.8" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+        </button>
+      </div>
+      <p class="composer-note">Nur freigegebenes Fachwissen · Keine personenbezogenen Daten eingeben</p>
+    </div>
+  </main>
+</div>
+
+<script>
+document.querySelectorAll('[data-question]').forEach(button => {
+    button.addEventListener('click', () => {
+        const input = document.getElementById('frage');
+        input.value = button.dataset.question;
+        input.focus();
+    });
+});
+
+const botAvatarIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2m16 0h2M9 13v2m6-2v2"/></svg>';
+const personAvatarIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>';
+
+async function senden() {
+    const input = document.getElementById('frage');
+    const button = document.getElementById('senden');
+    const frage = input.value.trim();
+    const kategorie = document.getElementById('kategorie').value;
+    if (!frage || button.disabled) return;
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+    const verlauf = document.getElementById('chatverlauf');
+    verlauf.innerHTML += `<div class="chat-row user-row"><div class="message"><div>${frage}</div></div><div class="avatar user-avatar">${personAvatarIcon}</div></div><div id="bot-loading" class="bot-message"><div class="avatar">${botAvatarIcon}</div><div class="message typing-message" role="status" aria-live="polite"><svg class="animate-spin" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity:.8" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>Antwort wird erstellt …</div></div>`;
+    verlauf.scrollTop = verlauf.scrollHeight;
+    input.value = '';
+    input.disabled = true;
+    button.disabled = true;
+    document.getElementById('sendenText').textContent = 'Wird erstellt';
+    document.getElementById('sendenSpinner').classList.remove('hidden');
+
+    const gestartet = performance.now();
+    try {
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', [csrfHeader]: csrfToken},
+            body: JSON.stringify({frage, kategorie})
+        });
+        if (!res.ok) throw new Error(`Chat-Anfrage fehlgeschlagen (${res.status})`);
+        const data = await res.json();
+        const dauerMs = performance.now() - gestartet;
+        const dauer = dauerMs < 1000
+            ? `${Math.round(dauerMs)} ms`
+            : `${(dauerMs / 1000).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})} s`;
+        document.getElementById('bot-loading').remove();
+        const quellen = data.quellen.map(q => {
+            const chip = document.createElement('span');
+            chip.className = 'source-chip';
+            chip.textContent = q.titel;
+            chip.title = `${q.kategorie}: ${q.text}`;
+            return chip.outerHTML;
+        }).join('');
+        verlauf.innerHTML += `<div class="bot-message"><div class="avatar">${botAvatarIcon}</div><div class="bot-message-content"><div class="message"><div class="answer-text">${data.antwort}</div><div class="message-meta">Antwortzeit (inkl. Übertragung): ${dauer}</div></div><div class="source-chips">${quellen}</div></div></div>`;
+        verlauf.scrollTop = verlauf.scrollHeight;
+    } catch (error) {
+        document.getElementById('bot-loading')?.remove();
+        verlauf.innerHTML += `<div class="bot-message" role="alert"><div class="avatar">${botAvatarIcon}</div><div class="message" style="border-color:#fecaca;background:#fef2f2;color:#b91c1c"><strong>Antwort nicht verfügbar</strong><br>Die Antwort konnte gerade nicht geladen werden. Bitte erneut versuchen.</div></div>`;
+        verlauf.scrollTop = verlauf.scrollHeight;
+        console.error(error);
+    } finally {
+        input.disabled = false;
+        button.disabled = false;
+        document.getElementById('sendenText').textContent = 'Senden';
+        document.getElementById('sendenSpinner').classList.add('hidden');
+        input.focus();
+    }
+}
+</script>
+</body>
+</html>

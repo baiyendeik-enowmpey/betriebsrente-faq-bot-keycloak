@@ -1,0 +1,5 @@
+[
+  {"frage":"Wie lange vorher muss Kapitalauszahlung beantragt werden?","muss_enthalten":["5 Jahre"]},
+  {"frage":"Gilt Versorgungsfreibetrag für Einmalkapital?","muss_enthalten":["NICHT","§19"]},
+  {"frage":"Wann ist Betriebsrente unverfallbar?","muss_enthalten":["21 Jahre","3 Jahre"]}
+]
