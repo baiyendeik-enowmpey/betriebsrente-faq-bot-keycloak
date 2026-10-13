@@ -30,6 +30,21 @@
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:8091/*"
       },
+      "protocolMappers": [
+        {
+          "name": "realm roles in id token and userinfo",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.claim": "true"
+          }
+        }
+      ],
       "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
     }
   ],
