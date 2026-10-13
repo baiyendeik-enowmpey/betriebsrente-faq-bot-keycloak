@@ -26,12 +26,33 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
       interval: 5s
+  realm-init:
+    image: alpine:3
+    environment:
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-betriebsrente-app}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-local-keycloak-client-secret}
+      KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD:-Betriebsrente2024!}
+      KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD: ${KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD:-Willkommen2024!}
+    # Keycloak does not resolve ${...} placeholders in imported realm files, so render them here.
+    command:
+      - sh
+      - -c
+      - >-
+        sed -e "s|$${KEYCLOAK_CLIENT_ID}|$$KEYCLOAK_CLIENT_ID|g"
+        -e "s|$${KEYCLOAK_CLIENT_SECRET}|$$KEYCLOAK_CLIENT_SECRET|g"
+        -e "s|$${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD}|$$KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD|g"
+        -e "s|$${KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD}|$$KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD|g"
+        /in/betriebsrente-realm.json > /out/betriebsrente-realm.json
+    volumes:
+      - ./keycloak/realm:/in:ro
+      - realm_rendered:/out
   keycloak:
     image: quay.io/keycloak/keycloak:26.7.3
     command: ["start-dev", "--import-realm"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-keycloak-admin-change-this}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-betriebsrente-app}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-local-keycloak-client-secret}
       KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD:-Betriebsrente2024!}
       KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD: ${KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD:-Willkommen2024!}
@@ -43,9 +64,10 @@ services:
       KC_HOSTNAME: http://localhost:8180
     ports: ["8180:8080"]
     volumes:
-      - ./keycloak/realm:/opt/keycloak/data/import:ro
+      - realm_rendered:/opt/keycloak/data/import:ro
     depends_on:
       keycloak-db: {condition: service_healthy}
+      realm-init: {condition: service_completed_successfully}
   app:
     build: .
     depends_on:
@@ -65,3 +87,4 @@ volumes:
   pgdata:
   ollama_data:
   keycloak_data:
+  realm_rendered:

@@ -36,6 +36,9 @@
   "users": [
     {
       "username": "fachbereich",
+      "email": "fachbereich@betriebsrente.local",
+      "firstName": "Fachbereich",
+      "lastName": "Admin",
       "enabled": true,
       "emailVerified": true,
       "credentials": [
@@ -45,6 +48,9 @@
     },
     {
       "username": "team",
+      "email": "team@betriebsrente.local",
+      "firstName": "Team",
+      "lastName": "Nutzer",
       "enabled": true,
       "emailVerified": true,
       "credentials": [
