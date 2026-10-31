@@ -110,11 +110,11 @@ public class ChatUiE2ETest {
         assertTrue(page.locator("#senden").isDisabled(), "Send button stays disabled while the answer loads");
 
         page.getByText(ANSWER).waitFor();
-        assertTrue(page.locator("#quellen").getByText("E2E-Steuerhinweis").isVisible(), "Source title is shown");
-        assertTrue(page.locator("#quellen")
-                        .getByText("Steuer", new Locator.GetByTextOptions().setExact(true)).isVisible(),
-                "Source category is shown");
-        page.locator("#chatverlauf p")
+        Locator sourceChip = page.locator("#chatverlauf .source-chip")
+                .filter(new Locator.FilterOptions().setHasText("E2E-Steuerhinweis"));
+        assertTrue(sourceChip.isVisible(), "Source title is shown");
+        assertTrue(sourceChip.getAttribute("title").startsWith("Steuer: "), "Source category is shown");
+        page.locator("#chatverlauf .message-meta")
                 .filter(new Locator.FilterOptions().setHasText(Pattern.compile(
                         "^Antwortzeit \\(inkl\\. Übertragung\\): (?:\\d+ ms|\\d+,\\d s)$")))
                 .waitFor();

@@ -90,11 +90,11 @@ public class AdminUiE2ETest {
     public void adminCanOpenDashboardAndSelectDocument() {
         openAdminPage();
 
-        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Admin - Fachwissen pflegen"))
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Wissensbasis verwalten"))
                 .waitFor();
-        assertTrue(page.getByText("Gespeicherte Dokumente").isVisible());
+        assertTrue(page.getByText("Freigegebene Dokumente").isVisible());
         assertTrue(page.getByText("Dokumente", new Page.GetByTextOptions().setExact(true)).isVisible());
-        assertTrue(page.getByText("Chunks (650 Tokens, 20% Overlap)").isVisible());
+        assertTrue(page.getByText("Textabschnitte", new Page.GetByTextOptions().setExact(true)).isVisible());
 
         page.locator("#file").setInputFiles(new FilePayload("admin-guide.txt", "text/plain",
                 "Informationen zur betrieblichen Altersversorgung.".getBytes()));
@@ -116,13 +116,14 @@ public class AdminUiE2ETest {
 
         submitDocument();
 
+        page.locator("#status.status-success").waitFor();
         assertTrue(page.locator("#status").isVisible());
-        assertTrue(page.locator("#status").getAttribute("class").contains("bg-green-50"));
         assertTrue(page.locator("#status").textContent().contains("E2E-Dokument"));
-        assertTrue(page.locator("#lastImport").textContent().contains("E2E-Dokument - 2 Chunks"));
+        assertEquals(page.locator("#uploadButtonText").textContent(), "Import läuft…",
+                "Upload button stays locked until the page reloads");
         page.waitForTimeout(2000);
-        assertEquals(page.locator("#lastImport").textContent(), "-",
-                "A successful upload reloads the dashboard");
+        page.locator("#uploadForm").waitFor();
+        assertFalse(page.locator("#status").isVisible(), "A successful upload reloads the page");
     }
 
     @Test
@@ -135,8 +136,8 @@ public class AdminUiE2ETest {
 
         submitDocument();
 
+        page.locator("#status.status-error").waitFor();
         assertTrue(page.locator("#status").isVisible());
-        assertTrue(page.locator("#status").getAttribute("class").contains("bg-red-50"));
         assertTrue(page.locator("#status").textContent()
                 .contains("Fehler: Dokument konnte nicht verarbeitet werden"));
     }
@@ -144,12 +145,14 @@ public class AdminUiE2ETest {
     @Test
     public void deletingDocumentRequiresConfirmation() {
         openAdminPage();
-        page.locator("tbody").evaluate("""
-                tbody => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = '<td colspan="4">E2E-Dokument</td>' +
-                        '<td><button data-id="987654321" onclick="loeschen(this)">Löschen</button></td>';
-                    tbody.appendChild(row);
+        page.locator(".documents-column").evaluate("""
+                column => {
+                    const card = document.createElement('article');
+                    card.className = 'document-card';
+                    card.innerHTML = '<h4>E2E-Dokument</h4>' +
+                        '<button class="button-secondary document-delete" data-id="987654321" ' +
+                        'onclick="loeschen(this)">Löschen</button>';
+                    column.appendChild(card);
                 }
                 """);
 
@@ -171,6 +174,45 @@ public class AdminUiE2ETest {
         assertTrue(deleteRequested.get(), "Confirming deletion sends the delete request");
     }
 
+    @Test
+    public void dragAndDropSelectsFileAndHighlightsDropZone() {
+        openAdminPage();
+        page.locator(".upload-drop").evaluate("""
+                zone => {
+                    const dt = new DataTransfer();
+                    dt.items.add(new File(['Inhalt'], 'drop-guide.txt', {type: 'text/plain'}));
+                    const fire = type => zone.dispatchEvent(
+                        new DragEvent(type, {dataTransfer: dt, bubbles: true, cancelable: true}));
+                    fire('dragenter');
+                    fire('dragover');
+                    window.__dragOverActive = zone.classList.contains('drag-over');
+                    fire('dragleave');
+                    window.__dragOverAfterLeave = zone.classList.contains('drag-over');
+                    fire('dragenter');
+                    fire('drop');
+                }
+                """);
+
+        assertEquals(page.evaluate("window.__dragOverActive"), true, "Drop zone is highlighted while dragging");
+        assertEquals(page.evaluate("window.__dragOverAfterLeave"), false, "Highlight is removed on drag leave");
+        assertFalse(page.locator(".upload-drop").getAttribute("class").contains("drag-over"));
+        assertTrue(page.locator("#fileName").textContent().contains("drop-guide.txt"));
+        assertEquals(page.locator("#file").evaluate("input => input.files[0].name"), "drop-guide.txt");
+    }
+
+    @Test
+    public void resetClearsSelectedFile() {
+        openAdminPage();
+        page.locator("#file").setInputFiles(new FilePayload("admin-guide.txt", "text/plain",
+                "Informationen zur betrieblichen Altersversorgung.".getBytes()));
+        assertTrue(page.locator("#fileName").isVisible());
+
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Zurücksetzen")).click();
+
+        assertFalse(page.locator("#fileName").isVisible(), "Selected file name is hidden after reset");
+        assertTrue(page.locator("#dropText").isVisible(), "Drop hint is shown again after reset");
+    }
+
     private void openAdminPage() {
         page.navigate(BASE_URL + "/login");
         page.locator("#keycloakLogin").click();
@@ -178,7 +220,7 @@ public class AdminUiE2ETest {
         page.locator("input[name='password']").fill(ADMIN_PASSWORD);
         page.locator("#kc-login").click();
         page.locator("#frage").waitFor();
-        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Adminbereich")).click();
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Wissensbasis").setExact(true)).click();
         page.locator("#uploadForm").waitFor();
         page.addStyleTag(new Page.AddStyleTagOptions().setContent(".hidden { display: none !important; }"));
     }
@@ -190,7 +232,7 @@ public class AdminUiE2ETest {
         page.locator("select[name='kategorie']").selectOption("Steuer");
         page.locator("input[name='quelle']").fill("E2E-Quelle");
         page.getByRole(AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Importieren & Chunking starten")).click();
+                new Page.GetByRoleOptions().setName("Importieren").setExact(true)).click();
     }
 
     private void collectAdminScriptCoverage() {
