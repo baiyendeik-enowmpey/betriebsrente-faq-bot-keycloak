@@ -10,15 +10,18 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import de.team.betriebsrente.model.Fachwissen;
 import de.team.betriebsrente.rag.ChunkingService;
 import de.team.betriebsrente.rag.DocumentParserService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
@@ -27,7 +30,7 @@ import org.springframework.mock.web.MockMultipartFile;
 class AdminControllerTest {
 
     @Test
-    @SuppressWarnings("null") // Mockito's generic matchers are not annotated for Spring AI's @NonNull parameters.
+    @SuppressWarnings({"null", "unchecked"}) // Mockito's generic matchers are not annotated for Spring AI's @NonNull parameters.
     void uploadPersistsDocumentAndAddsChunks() throws Exception {
         DocumentParserService parser = mock(DocumentParserService.class);
         ChunkingService chunking = mock(ChunkingService.class);
@@ -43,13 +46,17 @@ class AdminControllerTest {
         var file = new MockMultipartFile("file", "guide.txt", "text/plain", text.getBytes());
 
         Map<String, Object> result = new AdminController(parser, chunking, vectorStore, entityManager)
-                .upload(file, "Steuer", "", null);
+                .upload(file, "Steuer", "", null, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
 
         assertEquals(true, result.get("success"));
         assertEquals("guide.txt", result.get("titel"));
         assertEquals(1, result.get("chunks"));
         verify(entityManager).flush();
         verify(vectorStore).add(anyList());
+        ArgumentCaptor<Map<String, Object>> meta = ArgumentCaptor.forClass(Map.class);
+        verify(chunking).chunk(anyString(), meta.capture());
+        assertEquals(20260101, meta.getValue().get("gueltig_ab"));
+        assertEquals(20261231, meta.getValue().get("gueltig_bis"));
     }
 
     @Test
@@ -60,9 +67,27 @@ class AdminControllerTest {
 
         Map<String, Object> result = new AdminController(
                 parser, mock(ChunkingService.class), mock(VectorStore.class), entityManager)
-                .upload(new MockMultipartFile("file", "guide.txt", "text/plain", new byte[0]), "Steuer", "", null);
+                .upload(new MockMultipartFile("file", "guide.txt", "text/plain", new byte[0]), "Steuer", "", null, null, null);
 
         assertTrue(result.containsKey("error"));
+        verify(entityManager, org.mockito.Mockito.never()).persist(any());
+    }
+
+    @Test
+    void uploadRejectsValidityEndBeforeStartAndBlankCategory() throws Exception {
+        DocumentParserService parser = mock(DocumentParserService.class);
+        EntityManager entityManager = mock(EntityManager.class);
+        AdminController controller = new AdminController(
+                parser, mock(ChunkingService.class), mock(VectorStore.class), entityManager);
+        var file = new MockMultipartFile("file", "guide.txt", "text/plain", new byte[0]);
+
+        Map<String, Object> invalidRange = controller.upload(file, "Steuer", "", null,
+                LocalDate.of(2026, 12, 31), LocalDate.of(2026, 1, 1));
+        Map<String, Object> blankCategory = controller.upload(file, "  ", "", null, null, null);
+
+        assertTrue(String.valueOf(invalidRange.get("error")).contains("Gültig bis"));
+        assertTrue(blankCategory.containsKey("error"));
+        verifyNoInteractions(parser);
         verify(entityManager, org.mockito.Mockito.never()).persist(any());
     }
 

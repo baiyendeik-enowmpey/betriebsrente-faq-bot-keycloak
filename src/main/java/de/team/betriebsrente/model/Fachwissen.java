@@ -2,6 +2,7 @@ package de.team.betriebsrente.model;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "fachwissen")
@@ -16,6 +17,10 @@ public class Fachwissen {
     private String originalText;
     private Integer version = 1;
     private String erstelltVon;
+    @Column(name = "gueltig_ab")
+    private LocalDate gueltigAb;
+    @Column(name = "gueltig_bis")
+    private LocalDate gueltigBis;
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -73,5 +78,30 @@ public class Fachwissen {
 
     public void setErstelltVon(String erstelltVon) {
         this.erstelltVon = erstelltVon;
+    }
+
+    public LocalDate getGueltigAb() {
+        return gueltigAb;
+    }
+
+    public void setGueltigAb(LocalDate gueltigAb) {
+        this.gueltigAb = gueltigAb;
+    }
+
+    public LocalDate getGueltigBis() {
+        return gueltigBis;
+    }
+
+    public void setGueltigBis(LocalDate gueltigBis) {
+        this.gueltigBis = gueltigBis;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    /** Gültigkeitsstatus am heutigen Tag (für die Admin-Ansicht). */
+    public Gueltigkeit.Status getGueltigkeitsStatus() {
+        return Gueltigkeit.status(gueltigAb, gueltigBis, LocalDate.now());
     }
 }

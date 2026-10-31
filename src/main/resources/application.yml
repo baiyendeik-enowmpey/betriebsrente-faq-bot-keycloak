@@ -33,6 +33,9 @@ spring:
         remove-existing-vector-store-table: false
 app:
   chunk: {size: 650}
+  rag:
+    # Mindestähnlichkeit für Kontext-Abschnitte (siehe RagService.DEFAULT_SIMILARITY_THRESHOLD)
+    similarity-threshold: 0.60
   keycloak:
     issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/betriebsrente}
     backchannel-issuer-uri: ${KEYCLOAK_BACKCHANNEL_ISSUER_URI:http://keycloak:8080/realms/betriebsrente}

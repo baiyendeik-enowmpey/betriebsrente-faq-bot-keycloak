@@ -1,16 +1,20 @@
 package de.team.betriebsrente.rag;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-import java.util.Objects;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +26,9 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 
 class RagServiceTest {
+
+    /** Fester Stichtag 31.10.2026, damit der Gültigkeitsfilter deterministisch ist. */
+    private static final Clock STICHTAG = Clock.fixed(Instant.parse("2026-10-31T10:00:00Z"), ZoneId.of("Europe/Berlin"));
 
     @Test
     void askFiltersDocumentsByCategoryAndReturnsModelAnswer() {
@@ -39,18 +46,18 @@ class RagServiceTest {
         stubChatResponse(request, response, "Answer");
         stubSimilaritySearch(vectorStore, List.of(matching, other));
 
-        RagService.Answer answer = new RagService(vectorStore, builder).ask("question", "Steuer");
+        RagService.Answer answer = new RagService(vectorStore, builder, STICHTAG).ask("question", "Steuer");
 
         assertEquals("Answer", answer.antwort());
         assertEquals(List.of(matching), answer.quellen());
-        ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
-        verify(vectorStore).similaritySearch(captor.capture());
-        assertEquals(new FilterExpressionBuilder().eq("kategorie", "Steuer").build(),
-                captor.getValue().getFilterExpression());
+        FilterExpressionBuilder b = new FilterExpressionBuilder();
+        assertEquals(b.and(b.eq("kategorie", "Steuer"),
+                        b.and(b.lte("gueltig_ab", 20261031), b.gte("gueltig_bis", 20261031))).build(),
+                captureSearchRequest(vectorStore).getFilterExpression());
     }
 
     @Test
-    void askIncludesAllMatchingDocumentsWhenAllCategoriesAreSelected() {
+    void askOnlySearchesCurrentlyValidKnowledgeWhenAllCategoriesAreSelected() {
         VectorStore vectorStore = mock(VectorStore.class);
         ChatClient.Builder builder = mock(ChatClient.Builder.class);
         ChatClient chatClient = mock(ChatClient.class);
@@ -63,14 +70,32 @@ class RagServiceTest {
         stubChatResponse(request, response, "Die DRV erhält keine monatlichen Beitragsnachweise.");
         stubSimilaritySearch(vectorStore, List.of(beitragsnachweis));
 
-        RagService.Answer answer = new RagService(vectorStore, builder)
+        RagService.Answer answer = new RagService(vectorStore, builder, STICHTAG)
                 .ask("Beitragsnachweis und die Rentenversicherung.", "Alle");
-        ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
-        verify(vectorStore).similaritySearch(captor.capture());
-        assertNull(captor.getValue().getFilterExpression());
 
         assertEquals("Die DRV erhält keine monatlichen Beitragsnachweise.", answer.antwort());
         assertEquals(List.of(beitragsnachweis), answer.quellen());
+        FilterExpressionBuilder b = new FilterExpressionBuilder();
+        SearchRequest search = captureSearchRequest(vectorStore);
+        assertEquals(b.and(b.lte("gueltig_ab", 20261031), b.gte("gueltig_bis", 20261031)).build(),
+                search.getFilterExpression());
+        assertEquals(RagService.DEFAULT_SIMILARITY_THRESHOLD, search.getSimilarityThreshold());
+    }
+
+    @Test
+    void askAnswersWithFixedHintAndSkipsModelWhenNothingValidIsFound() {
+        VectorStore vectorStore = mock(VectorStore.class);
+        ChatClient.Builder builder = mock(ChatClient.Builder.class);
+        ChatClient chatClient = mock(ChatClient.class);
+        when(builder.build()).thenReturn(chatClient);
+        stubSimilaritySearch(vectorStore, List.of());
+
+        RagService.Answer answer = new RagService(vectorStore, builder, STICHTAG).ask("Unbekanntes Thema", "Alle");
+
+        assertEquals(RagService.KEINE_FACHINFO, answer.antwort());
+        assertTrue(answer.antwort().contains("Onboarding-Paten oder den Teamleiter"));
+        assertEquals(List.of(), answer.quellen());
+        verifyNoInteractions(chatClient);
     }
 
     // Mockito matchers return null sentinels during stubbing, which JDT cannot distinguish from runtime values.
@@ -87,5 +112,11 @@ class RagServiceTest {
     @SuppressWarnings("null")
     private static void stubSimilaritySearch(VectorStore vectorStore, List<Document> documents) {
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(documents);
+    }
+
+    private static SearchRequest captureSearchRequest(VectorStore vectorStore) {
+        ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
+        verify(vectorStore).similaritySearch(captor.capture());
+        return captor.getValue();
     }
 }

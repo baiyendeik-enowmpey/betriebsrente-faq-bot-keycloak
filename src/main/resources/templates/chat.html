@@ -46,8 +46,8 @@
     <div id="chatverlauf" class="chat-history" aria-live="polite">
       <div class="welcome-card">
         <div class="welcome-icon" aria-hidden="true">✳</div>
-        <h2>Hallo! Ich bin der Renten-Fachbot.</h2>
-        <p>Fragen Sie zur betrieblichen Altersversorgung. Ich antworte mit freigegebenem Fachwissen und zeige die verwendeten Quellen an.</p>
+        <h2>Herzlich willkommen im Team der Renten- und Pensionsauszahlung!</h2>
+        <p>Ich bin dein digitaler Onboarding-Assistent für das Zahlstellen-Meldeverfahren (ZMV) und das DaBPV-Verfahren. Egal, ob du Fragen zu den Meldegründen, den aktuellen Beitragsgrenzen für KV und PV oder zu Fehlermeldungen der Krankenkassen hast – tippe deine Frage einfach ein. Ich antworte nur mit freigegebenem, aktuell gültigem Fachwissen und zeige die Quellen an.</p>
       </div>
     </div>
     <div class="chat-composer reference-composer">
@@ -120,6 +120,13 @@ async function senden() {
             chip.className = 'source-chip';
             chip.textContent = q.titel;
             chip.title = `${q.kategorie}: ${q.text}`;
+            if (q.gueltigBis) {
+                const gueltig = document.createElement('span');
+                gueltig.className = 'source-chip-validity';
+                gueltig.textContent = ` · gültig bis ${q.gueltigBis}`;
+                chip.appendChild(gueltig);
+                chip.title += ` (gültig bis ${q.gueltigBis})`;
+            }
             return chip.outerHTML;
         }).join('');
         verlauf.innerHTML += `<div class="bot-message"><div class="avatar">${botAvatarIcon}</div><div class="bot-message-content"><div class="message"><div class="answer-text">${escapeHtml(data.antwort)}</div><div class="message-meta">Antwortzeit (inkl. Übertragung): ${dauer}</div></div><div class="source-chips">${quellen}</div></div></div>`;

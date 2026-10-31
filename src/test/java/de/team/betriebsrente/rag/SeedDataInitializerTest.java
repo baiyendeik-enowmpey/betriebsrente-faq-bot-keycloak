@@ -1,47 +1,38 @@
 package de.team.betriebsrente.rag;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.mockito.ArgumentMatchers;
-import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.DefaultApplicationArguments;
 
 class SeedDataInitializerTest {
 
     @Test
-    void skipsImportWhenKnowledgeAlreadyExists() throws Exception {
-        IngestionService ingestionService = mock(IngestionService.class);
-        EntityManager entityManager = mock(EntityManager.class);
-        Query query = mock(Query.class);
-        when(entityManager.createQuery(anyString())).thenReturn(query);
-        when(query.getSingleResult()).thenReturn(2L);
+    void synchronisesBundledSeedFileAndBackfillsValidity() throws Exception {
+        SeedSyncService seedSync = mock(SeedSyncService.class);
+        when(seedSync.synchronisiere(any(File.class))).thenReturn(SeedSyncService.Ergebnis.AKTUELL);
 
-        ApplicationRunner runner = new SeedDataInitializer().seedOnEmpty(ingestionService, entityManager);
+        ApplicationRunner runner = new SeedDataInitializer().seedOnEmpty(seedSync);
         runner.run(new DefaultApplicationArguments());
 
-        verifyNoInteractions(ingestionService);
+        // Im Projektverzeichnis wird testdaten/fachwissen_seed.json gefunden.
+        verify(seedSync).synchronisiere(new File("testdaten/fachwissen_seed.json"));
+        verify(seedSync).ergaenzeFehlendeGueltigkeit();
     }
 
     @Test
-    void exposesSeedImportFailuresInsteadOfReportingMissingFile() throws Exception {
-        IngestionService ingestionService = mock(IngestionService.class);
-        EntityManager entityManager = mock(EntityManager.class);
-        Query query = mock(Query.class);
-        when(entityManager.createQuery(anyString())).thenReturn(query);
-        when(query.getSingleResult()).thenReturn(0L);
-        doThrow(new IllegalStateException("seed import failed"))
-                .when(ingestionService).ingestFromJson(ArgumentMatchers.any(File.class));
+    void exposesSeedImportFailures() throws Exception {
+        SeedSyncService seedSync = mock(SeedSyncService.class);
+        doThrow(new IllegalStateException("seed import failed")).when(seedSync).synchronisiere(any(File.class));
 
-        ApplicationRunner runner = new SeedDataInitializer().seedOnEmpty(ingestionService, entityManager);
+        ApplicationRunner runner = new SeedDataInitializer().seedOnEmpty(seedSync);
 
         assertThrows(IllegalStateException.class, () -> runner.run(new DefaultApplicationArguments()));
     }

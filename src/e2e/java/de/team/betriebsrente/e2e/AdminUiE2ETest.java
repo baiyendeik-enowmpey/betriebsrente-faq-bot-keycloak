@@ -229,7 +229,7 @@ public class AdminUiE2ETest {
         page.locator("#file").setInputFiles(new FilePayload("admin-guide.txt", "text/plain",
                 "Informationen zur betrieblichen Altersversorgung.".getBytes()));
         page.locator("input[name='titel']").fill("E2E-Dokument");
-        page.locator("select[name='kategorie']").selectOption("Steuer");
+        page.locator("input[name='kategorie']").fill("Steuer");
         page.locator("input[name='quelle']").fill("E2E-Quelle");
         page.getByRole(AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Importieren").setExact(true)).click();

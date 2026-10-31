@@ -1,18 +1,25 @@
 package de.team.betriebsrente.rag;
 
 import de.team.betriebsrente.model.Fachwissen;
+import de.team.betriebsrente.model.Gueltigkeit;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 @Service
 public class IngestionService {
+    /** Kennzeichnung für Einträge aus der Seed-Datei; nur diese werden beim Seed-Abgleich ersetzt. */
+    public static final String ERSTELLT_VON_SEED = "seed";
+    public static final String ERSTELLT_VON_JSON_IMPORT = "json-import";
+
     private final VectorStore vectorStore;
     private final ChunkingService chunkingService;
     private final EntityManager em;
@@ -25,7 +32,17 @@ public class IngestionService {
     }
 
     @Transactional
-    public void ingestFromJson(File jsonFile) throws Exception {
+    public int ingestFromJson(File jsonFile) throws Exception {
+        return ingestFromJson(jsonFile, ERSTELLT_VON_JSON_IMPORT);
+    }
+
+    /**
+     * Importiert Fachwissen aus einer JSON-Liste.
+     *
+     * @return Anzahl der importierten Einträge
+     */
+    @Transactional
+    public int ingestFromJson(File jsonFile, String erstelltVon) throws Exception {
         List<Map<String, Object>> entries = mapper.readValue(jsonFile, new TypeReference<>() {
         });
         for (Map<String, Object> e : entries) {
@@ -39,10 +56,19 @@ public class IngestionService {
                     "Titel: " + title + "\nKategorie: " + category);
             String quelle = optionalString(e, "quelle", "intern");
             String searchableText = searchableText(originalText, e.get("training_phrases"));
+            LocalDate gueltigAb = optionalDate(e, "gueltig_ab");
+            LocalDate gueltigBis = optionalDate(e, "gueltig_bis");
+            String fehler = Gueltigkeit.pruefe(gueltigAb, gueltigBis);
+            if (fehler != null) {
+                throw new IllegalArgumentException("Seed-Eintrag '" + title + "': " + fehler);
+            }
             fw.setTitel(title);
             fw.setKategorie(category);
             fw.setOriginalText(originalText);
             fw.setQuelle(quelle);
+            fw.setGueltigAb(gueltigAb);
+            fw.setGueltigBis(gueltigBis);
+            fw.setErstelltVon(erstelltVon);
             em.persist(fw);
             em.flush();
             Map<String, Object> meta = new HashMap<>();
@@ -50,8 +76,10 @@ public class IngestionService {
             meta.put("titel", fw.getTitel());
             meta.put("kategorie", fw.getKategorie());
             meta.put("quelle", fw.getQuelle());
+            Gueltigkeit.inMetadaten(meta, gueltigAb, gueltigBis);
             vectorStore.add(chunkingService.chunk(searchableText, meta));
         }
+        return entries.size();
     }
 
     @NonNull
@@ -74,6 +102,18 @@ public class IngestionService {
             return text;
         }
         throw new IllegalArgumentException("Seed field " + key + " must be a string");
+    }
+
+    private LocalDate optionalDate(@NonNull Map<String, Object> entry, @NonNull String key) {
+        Object value = entry.get(key);
+        if (value == null || (value instanceof String text && text.isBlank())) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(String.valueOf(value));
+        } catch (DateTimeParseException ex) {
+            throw new IllegalArgumentException("Seed-Feld " + key + " muss ein Datum im Format JJJJ-MM-TT sein", ex);
+        }
     }
 
     @NonNull

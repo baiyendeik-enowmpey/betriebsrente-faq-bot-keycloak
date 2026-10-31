@@ -54,7 +54,7 @@ class ChatControllerTest {
         RagService ragService = mock(RagService.class);
         String sourceText = Objects.requireNonNull("x".repeat(500));
         Document source = new Document(sourceText,
-                Objects.requireNonNull(Map.of("titel", "Quelle", "kategorie", "Steuer")));
+                Objects.requireNonNull(Map.of("titel", "Quelle", "kategorie", "Steuer", "gueltig_bis", 20261231)));
         when(ragService.ask("Frage", "Steuer")).thenReturn(new RagService.Answer("Antwort", List.of(source)));
 
         Map<String, Object> result = new ChatController(ragService, mock(FachwissenRepository.class))
@@ -67,6 +67,7 @@ class ChatControllerTest {
         assertEquals(403, ((String) sources.get(0).get("text")).length());
         assertEquals("Quelle", sources.get(0).get("titel"));
         assertEquals("Steuer", sources.get(0).get("kategorie"));
+        assertEquals("31.12.2026", sources.get(0).get("gueltigBis"));
     }
 
     @Test

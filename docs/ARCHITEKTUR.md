@@ -188,17 +188,23 @@ sequenceDiagram
     C->>C: Validierung (nicht leer, ≤ 2000 Zeichen) sonst 400
     C->>R: ask(frage, kategorie)
     R->>O: Embedding der Frage (nomic-embed-text)
-    R->>V: similaritySearch(topK=3, Schwelle 0.35,<br/>Filter kategorie == X falls ≠ "Alle")
+    R->>V: similaritySearch(topK=3, Schwelle 0.60,<br/>Filter: heute gültig (gueltig_ab ≤ heute ≤ gueltig_bis)<br/>und kategorie == X falls ≠ "Alle")
     V-->>R: Top-Abschnitte inkl. Metadaten
-    R->>O: Systemprompt (Regeln + KONTEXT) + Frage<br/>llama3.2:3b, temperature 0.2, num-predict 384
-    O-->>R: Antworttext
+    alt keine gültigen Treffer
+        R-->>R: fester Hinweis (Onboarding-Paten/Teamleiter), kein LLM-Aufruf
+    else Treffer vorhanden
+        R->>O: Systemprompt (Regeln + KONTEXT) + Frage<br/>llama3.2:3b, temperature 0.2, num-predict 384
+        O-->>R: Antworttext
+    end
     R-->>C: Answer(antwort, quellen)
     C-->>U: {antwort, quellen[titel, kategorie, Textvorschau 400 Z.]}
     U->>U: HTML-Escaping, Anzeige mit Quellen-Chips
 ```
 
-Ohne passenden Kontext antwortet das Modell laut Systemprompt mit
-*„Dazu liegt keine freigegebene Fachinfo vor. Bitte Fachbereich fragen.“*
+Ohne gültige Treffer wird das Modell gar nicht aufgerufen; die App antwortet sofort mit einem festen
+Hinweis (Formulierungstipp + Eskalation an Onboarding-Paten/Teamleiter). Beantwortet der gefundene
+Kontext die Frage nicht, antwortet das Modell laut Systemprompt mit
+*„Dazu liegt keine freigegebene Fachinfo vor. Bitte Onboarding-Paten oder Teamleiter fragen.“*
 
 ### 4.3 Dokument hochladen (nur ADMIN)
 
@@ -235,10 +241,13 @@ sequenceDiagram
 2. Altdaten aus `fachwissen_chunks`,
 3. den Eintrag in `fachwissen`.
 
-### 4.5 Seed-Import beim Start
+### 4.5 Seed-Abgleich beim Start
 
-`SeedDataInitializer` prüft beim Start, ob `fachwissen` leer ist. Falls ja, importiert der
-`IngestionService` `testdaten/fachwissen_seed.json`. Die `training_phrases` jedes Eintrags werden als
+`SeedDataInitializer` ruft beim Start den `SeedSyncService` auf. Dieser vergleicht die SHA-256-Prüfsumme
+von `testdaten/fachwissen_seed.json` mit dem letzten Eintrag in `seed_import`. Hat sich die Datei geändert
+(oder wurde noch nie importiert), werden alle Einträge mit `erstellt_von = 'seed'` samt Vektoren entfernt und
+neu importiert – Admin-Uploads bleiben unberührt. Bei unveränderter Datei passiert nichts. Anschließend erhalten
+Vektoren ohne Gültigkeitsangabe offene Grenzen (unbefristet). Die `training_phrases` jedes Eintrags werden als
 „Beispielfragen“ an den Text gehängt, damit typische Formulierungen bei der Vektorsuche besser treffen.
 Ein manueller Import ist per Startargument `--import=<pfad>` möglich.
 
@@ -258,13 +267,21 @@ erDiagram
         varchar quelle
         text original_text
         int version
-        varchar erstellt_von
+        varchar erstellt_von "seed | admin-upload | json-import"
+        date gueltig_ab "NULL = sofort"
+        date gueltig_bis "NULL = unbefristet"
         timestamp created_at
+    }
+    seed_import {
+        bigserial id PK
+        varchar hash "SHA-256 der Seed-Datei"
+        int eintraege
+        timestamp importiert_am
     }
     vector_store {
         uuid id PK
         text content
-        json metadata "fachwissen_id, titel, kategorie, quelle, chunk_index, chunk_count"
+        json metadata "fachwissen_id, titel, kategorie, quelle, gueltig_ab, gueltig_bis (yyyyMMdd), chunk_index"
         vector embedding "768 Dim., HNSW-Index, Kosinus"
     }
     fachwissen_chunks {
@@ -289,7 +306,8 @@ erDiagram
     }
 ```
 
-- `fachwissen`, `fachwissen_chunks`, `audit_log`, `chat_history`: per **Flyway** (`V1__init.sql`, `V2__audit_and_chat.sql`); Hibernate läuft mit `ddl-auto: validate`.
+- `fachwissen`, `fachwissen_chunks`, `audit_log`, `chat_history`, `seed_import`: per **Flyway** (`V1`–`V3`); Hibernate läuft mit `ddl-auto: validate`.
+- **Gültigkeit:** `gueltig_ab`/`gueltig_bis` stehen in `fachwissen` und als Zahl `yyyyMMdd` in den Vektor-Metadaten (offen = `0` bzw. `99991231`), damit die Suche per pgvector-Filter nur heute gültiges Wissen verwendet. Der Admin zeigt den Status (gültig, läuft in ≤ 60 Tagen ab, abgelaufen, noch nicht gültig).
 - `vector_store`: wird von **Spring AI** angelegt (`initialize-schema: true`) und ist die eigentliche Wissensbasis der Suche.
 - `fachwissen_chunks`, `audit_log`, `chat_history` werden derzeit nicht beschrieben.
 
@@ -322,7 +340,8 @@ erDiagram
 | `app.chunk.size` | `650` | Abschnittsgröße in Tokens |
 | `app.keycloak.issuer-uri` / `backchannel-issuer-uri` | `localhost:8180` / `keycloak:8080` | Öffentlicher bzw. interner Keycloak |
 | `app.ocr.*` | `deu+eng` | OCR-Einstellungen (Service nicht angebunden) |
-| `RagService.TOP_K` / `SIMILARITY_THRESHOLD` | `3` / `0.35` | Anzahl und Mindestähnlichkeit der Kontextabschnitte (im Code) |
+| `app.rag.similarity-threshold` | `0.60` | Mindestähnlichkeit der Kontextabschnitte. Gemessen (10/2026): Fachfragen 0,65–0,86, fachfremde 0,57–0,65 |
+| `RagService.TOP_K` | `3` | Anzahl der Kontextabschnitte (im Code) |
 
 ---
 
@@ -330,7 +349,7 @@ erDiagram
 
 | Ebene | Umfang | Ausführung |
 |---|---|---|
-| Unit-Tests | 25 Tests (JUnit 5 + Mockito) für Controller, Services, Security | `mvn verify` (benötigt JDK 25) |
+| Unit-Tests | 35 Tests (JUnit 5 + Mockito) für Controller, Services, Security | `mvn verify` (benötigt JDK 25) |
 | UI-E2E | Playwright + TestNG für Chat und Admin, Backend-Antworten simuliert | `mvn -Pe2e … exec:java` (siehe README) |
 | Coverage | JaCoCo-Report in `target/site/jacoco` | Phase `verify` |
 | Bewertungsdaten | `testdaten/eval_dataset.json` | Manuelle Auswertung |
@@ -339,10 +358,10 @@ erDiagram
 
 ## 9. Bekannte Grenzen und nächste Schritte
 
-1. **Antwortzeit:** Die Inferenz läuft nur auf der CPU. Mit 6 vCPUs/8 GB dauert eine Antwort etwa 20–60 s, unter 5 s geht es nur mit GPU.
-2. **Nicht angebundene Funktionen:** `AuditService` (Audit-Log, Chatverlauf), `ChatExportService` (PDF-Export) und `OcrService` (gescannte PDFs) sind implementiert, werden aber nirgends aufgerufen.
-3. **Altlast `fachwissen_chunks`:** Die Tabelle ist leer und wird nicht genutzt. Sie könnte per Flyway-Migration entfernt werden.
-4. **Admin-Kategorien fest verdrahtet:** Das Upload-Formular bietet feste Kategorien an, der Chat-Filter liest sie dagegen aus der Datenbank.
+1. **Trennschärfe der Suche:** `nomic-embed-text` trennt deutsche Fach- und fachfremde Fragen kaum (Abstand ≈ 0,003). Ein mehrsprachiges Embedding-Modell (z. B. `bge-m3`) plus hybride Suche ist der nächste Hebel.
+2. **Antwortzeit:** Die Inferenz läuft nur auf der CPU. Mit 6 vCPUs/8 GB dauert eine Antwort etwa 20–60 s, unter 5 s geht es nur mit GPU.
+3. **Nicht angebundene Funktionen:** `AuditService` (Audit-Log, Chatverlauf), `ChatExportService` (PDF-Export) und `OcrService` (gescannte PDFs) sind implementiert, werden aber nirgends aufgerufen.
+4. **Altlast `fachwissen_chunks`:** Die Tabelle ist leer und wird nicht genutzt. Sie könnte per Flyway-Migration entfernt werden.
 5. **Kein Chunk-Overlap:** `TokenTextSplitter` unterstützt keine Überlappung zwischen Abschnitten.
 6. **`.doc` (Word 97–2003)** wird wie DOCX behandelt und schlägt beim Parsen fehl. Dafür wäre `HWPFDocument` nötig.
 7. **Keine Streaming-Antworten:** Die UI wartet auf die vollständige Antwort. Mit `ChatClient.stream()` und SSE würde die gefühlte Wartezeit deutlich sinken.

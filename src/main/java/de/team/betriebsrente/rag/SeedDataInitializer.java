@@ -1,37 +1,35 @@
 package de.team.betriebsrente.rag;
 
-import jakarta.persistence.EntityManager;
+import java.io.File;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import java.io.File;
 
 @Configuration
 public class SeedDataInitializer {
+    private static final Logger log = LoggerFactory.getLogger(SeedDataInitializer.class);
+
+    static final List<String> SEED_PFADE = List.of(
+            "testdaten/fachwissen_seed.json",
+            "/app/testdaten/fachwissen_seed.json",
+            "src/main/resources/testdaten/fachwissen_seed.json");
 
     @Bean
-    public ApplicationRunner seedOnEmpty(IngestionService ingestionService, EntityManager em) {
+    public ApplicationRunner seedOnEmpty(SeedSyncService seedSync) {
         return args -> {
             try {
-                Long count = (Long) em.createQuery("SELECT COUNT(f) FROM Fachwissen f").getSingleResult();
-                if (count == 0) {
-                    System.out.println("=== Keine Fachdaten vorhanden - importiere Seed Daten ===");
-                    String[] paths = {
-                            "testdaten/fachwissen_seed.json",
-                            "/app/testdaten/fachwissen_seed.json",
-                            "src/main/resources/testdaten/fachwissen_seed.json"
-                    };
-                    for (String p : paths) {
-                        File seedFile = new File(p);
-                        if (seedFile.isFile()) {
-                            ingestionService.ingestFromJson(seedFile);
-                            System.out.println("Seed Import erfolgreich: " + seedFile.getAbsolutePath());
-                            return;
-                        }
-                    }
-                    System.out.println("Kein Seed File gefunden - bitte manuell über /admin hochladen");
-                } else {
-                    System.out.println("Fachwissen vorhanden: " + count + " Einträge");
+                File seedDatei = SEED_PFADE.stream().map(File::new).filter(File::isFile).findFirst().orElse(null);
+                if (seedDatei == null) {
+                    log.info("Kein Seed-File gefunden – Fachwissen bitte über /admin hochladen");
+                } else if (seedSync.synchronisiere(seedDatei) == SeedSyncService.Ergebnis.AKTUELL) {
+                    log.info("Seed-Daten sind aktuell ({})", seedDatei.getAbsolutePath());
+                }
+                int ergaenzt = seedSync.ergaenzeFehlendeGueltigkeit();
+                if (ergaenzt > 0) {
+                    log.info("Gültigkeit bei {} Textabschnitten ohne Angabe als unbefristet ergänzt", ergaenzt);
                 }
             } catch (RuntimeException e) {
                 throw e;

@@ -1,6 +1,7 @@
 package de.team.betriebsrente.controller;
 
 import de.team.betriebsrente.model.Fachwissen;
+import de.team.betriebsrente.model.Gueltigkeit;
 import de.team.betriebsrente.rag.*;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -9,10 +10,12 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.time.LocalDate;
 import java.util.*;
 
 @Controller
@@ -44,6 +47,11 @@ public class AdminController {
             model.addAttribute("chunkCount", "?");
         }
         model.addAttribute("docCount", em.createQuery("SELECT COUNT(f) FROM Fachwissen f").getSingleResult());
+        model.addAttribute("abgelaufenCount", em.createQuery(
+                        "SELECT COUNT(f) FROM Fachwissen f WHERE f.gueltigBis < :heute")
+                .setParameter("heute", LocalDate.now()).getSingleResult());
+        model.addAttribute("kategorien", em.createQuery(
+                "SELECT DISTINCT f.kategorie FROM Fachwissen f ORDER BY f.kategorie", String.class).getResultList());
         return "admin";
     }
 
@@ -53,8 +61,22 @@ public class AdminController {
     public Map<String, Object> upload(@RequestParam("file") MultipartFile file,
             @RequestParam("kategorie") String kategorie,
             @RequestParam("quelle") String quelle,
-            @RequestParam(value = "titel", required = false) String titel) {
+            @RequestParam(value = "titel", required = false) String titel,
+            @RequestParam(value = "gueltigAb", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate gueltigAb,
+            @RequestParam(value = "gueltigBis", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate gueltigBis) {
         Map<String, Object> resp = new HashMap<>();
+        String kategorieBereinigt = kategorie == null ? "" : kategorie.strip();
+        if (kategorieBereinigt.isEmpty()) {
+            resp.put("error", "Bitte eine Kategorie angeben.");
+            return resp;
+        }
+        String gueltigkeitsFehler = Gueltigkeit.pruefe(gueltigAb, gueltigBis);
+        if (gueltigkeitsFehler != null) {
+            resp.put("error", gueltigkeitsFehler);
+            return resp;
+        }
         try {
             var parsed = parser.parse(file);
             String parsedText = Objects.requireNonNullElse(parsed.text(), "");
@@ -64,7 +86,9 @@ public class AdminController {
             }
             Fachwissen fw = new Fachwissen();
             fw.setTitel((titel == null || titel.isBlank()) ? parsed.fileName() : titel);
-            fw.setKategorie(kategorie);
+            fw.setKategorie(kategorieBereinigt);
+            fw.setGueltigAb(gueltigAb);
+            fw.setGueltigBis(gueltigBis);
             fw.setQuelle(quelle.isBlank() ? parsed.fileName() : quelle);
             fw.setOriginalText(parsedText);
             fw.setErstelltVon("admin-upload");
@@ -77,6 +101,7 @@ public class AdminController {
             meta.put("kategorie", fw.getKategorie());
             meta.put("quelle", fw.getQuelle());
             meta.put("fileName", parsed.fileName());
+            Gueltigkeit.inMetadaten(meta, gueltigAb, gueltigBis);
 
             List<Document> chunks = chunking.chunk(parsedText, meta);
             vectorStore.add(chunks);

@@ -1,5 +1,6 @@
 package de.team.betriebsrente.controller;
 
+import de.team.betriebsrente.model.Gueltigkeit;
 import de.team.betriebsrente.rag.RagService;
 import de.team.betriebsrente.repository.FachwissenRepository;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Controller
@@ -15,6 +18,7 @@ public class ChatController {
     static final String ALLE = "Alle";
     static final int MAX_FRAGE_LAENGE = 2000;
     private static final int QUELLEN_VORSCHAU = 400;
+    private static final DateTimeFormatter DATUM = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     private final RagService ragService;
     private final FachwissenRepository fachwissenRepository;
@@ -51,10 +55,13 @@ public class ChatController {
         resp.put("antwort", result.antwort());
         resp.put("quellen", result.quellen().stream().map(d -> {
             String text = Objects.requireNonNullElse(d.getText(), "");
-            return Map.of(
-                    "titel", d.getMetadata().getOrDefault("titel", "-"),
-                    "kategorie", d.getMetadata().getOrDefault("kategorie", "-"),
-                    "text", text.length() > QUELLEN_VORSCHAU ? text.substring(0, QUELLEN_VORSCHAU) + "..." : text);
+            Map<String, Object> quelle = new HashMap<>();
+            quelle.put("titel", d.getMetadata().getOrDefault("titel", "-"));
+            quelle.put("kategorie", d.getMetadata().getOrDefault("kategorie", "-"));
+            quelle.put("text", text.length() > QUELLEN_VORSCHAU ? text.substring(0, QUELLEN_VORSCHAU) + "..." : text);
+            LocalDate gueltigBis = Gueltigkeit.datum(d.getMetadata().get(Gueltigkeit.META_BIS));
+            quelle.put("gueltigBis", gueltigBis == null ? null : gueltigBis.format(DATUM));
+            return quelle;
         }).toList());
         return resp;
     }

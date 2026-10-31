@@ -26,7 +26,8 @@
         <div class="admin-sidebar-stat"><strong th:text="${docCount}">0</strong><span>Dokumente</span></div>
         <div class="admin-sidebar-stat"><strong th:text="${chunkCount}">0</strong><span>Textabschnitte</span></div>
       </div>
-      <div class="reference-note"><strong>Import-Hinweis</strong>Bitte geben Sie für jedes Dokument eine aussagekräftige Kategorie und Quelle an. Unterstützt werden PDF, Word, Text und Markdown.</div>
+      <div class="reference-note reference-note-warn" th:if="${abgelaufenCount > 0}"><strong th:text="|${abgelaufenCount} Dokument(e) abgelaufen|">Abgelaufen</strong>Abgelaufene Dokumente werden im Chat nicht mehr verwendet. Bitte aktualisieren oder löschen.</div>
+      <div class="reference-note"><strong>Import-Hinweis</strong>Bitte geben Sie für jedes Dokument eine aussagekräftige Kategorie und Quelle an. Für jährlich wechselnde Werte (z. B. Rechengrößen) bitte „Gültig bis“ setzen. Unterstützt werden PDF, Word, Text und Markdown.</div>
     </section>
   </aside>
 
@@ -51,7 +52,10 @@
           <div class="form-grid">
             <div class="form-field"><label class="field-label" for="titel">Titel <span style="font-weight:400;color:#a1a1aa">(optional)</span></label><input id="titel" name="titel" class="text-field" placeholder="z. B. BetrAVG Auszahlungsrichtlinie"/></div>
             <div class="form-field"><label class="field-label" for="quelle">Quelle</label><input id="quelle" name="quelle" class="text-field" placeholder="z. B. BetrAVG § 3"/></div>
-            <div class="form-field"><label class="field-label" for="kategorie">Kategorie *</label><select id="kategorie" name="kategorie" class="select-field"><option>Auszahlung</option><option>Steuer</option><option>Unverfallbarkeit</option><option>Arbeitgeberwechsel</option><option>Recht</option><option>Prozess</option></select></div>
+            <div class="form-field"><label class="field-label" for="kategorie">Kategorie *</label><input id="kategorie" name="kategorie" class="text-field" list="kategorieVorschlaege" required autocomplete="off" placeholder="z. B. Steuer"/>
+              <datalist id="kategorieVorschlaege"><option th:each="k : ${kategorien}" th:value="${k}"></option></datalist></div>
+            <div class="form-field"><label class="field-label" for="gueltigAb">Gültig ab <span style="font-weight:400;color:#777">(optional)</span></label><input id="gueltigAb" name="gueltigAb" type="date" class="text-field"/></div>
+            <div class="form-field"><label class="field-label" for="gueltigBis">Gültig bis <span style="font-weight:400;color:#777">(optional)</span></label><input id="gueltigBis" name="gueltigBis" type="date" class="text-field"/></div>
           </div>
           <div class="pp-actions">
           <button id="resetButton" type="reset" class="button button-danger">Zurücksetzen</button>
@@ -78,6 +82,13 @@
             <button class="button-secondary document-delete" th:attr="data-id=${d.id}" onclick="loeschen(this)">Löschen</button>
           </div>
           <p><span th:text="${#strings.length(d.originalText)}">0</span> Zeichen im importierten Dokument</p>
+          <p class="validity-line" th:if="${d.gueltigAb != null or d.gueltigBis != null}" th:switch="${d.gueltigkeitsStatus.name()}">
+            <span th:case="'ABGELAUFEN'" class="validity-badge validity-expired">Abgelaufen</span>
+            <span th:case="'LAEUFT_BALD_AB'" class="validity-badge validity-soon">Läuft bald ab</span>
+            <span th:case="'NOCH_NICHT_GUELTIG'" class="validity-badge validity-future">Noch nicht gültig</span>
+            <span th:case="*" class="validity-badge validity-ok">Gültig</span>
+            <span th:text="|${d.gueltigAb != null ? #temporals.format(d.gueltigAb, 'dd.MM.yyyy') : 'offen'} – ${d.gueltigBis != null ? #temporals.format(d.gueltigBis, 'dd.MM.yyyy') : 'offen'}|">01.01.2026 – 31.12.2026</span>
+          </p>
         </article>
         <div class="empty-sources" th:if="${#lists.isEmpty(dokumente)}">Noch keine Dokumente in der Wissensbasis.</div>
       </section>
