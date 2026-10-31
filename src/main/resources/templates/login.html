@@ -7,15 +7,20 @@
   <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body class="login-page">
+<header th:replace="~{fragments/layout :: header('Anmeldung', false)}"></header>
+<div class="login-stage">
 <main class="login-card">
   <div class="login-brand">
-    <div class="brand-mark" aria-hidden="true">BR</div>
-    <div><h1 class="login-title">Renten-Fachbot</h1><p class="login-intro">Intern · nur Team &amp; Fachbereich</p></div>
+    <div><h1 class="login-title">Renten<strong>|</strong>Fachbot</h1><p class="login-intro">Intern · nur Team &amp; Fachbereich</p></div>
   </div>
   <h2 class="login-heading">Willkommen zurück</h2>
   <p class="login-description">Melden Sie sich an, um auf den Fachwissen-Assistenten zuzugreifen.</p>
-  <a id="keycloakLogin" class="button button-primary login-submit" th:href="@{/oauth2/authorization/keycloak}">Mit Keycloak anmelden</a>
   <p class="login-footnote">Anmeldung und Benutzerverwaltung erfolgen über den zentralen Keycloak-Identity-Provider.</p>
+  <div class="login-actions">
+    <a id="keycloakLogin" class="button button-primary login-submit" th:href="@{/oauth2/authorization/keycloak}">Anmelden</a>
+  </div>
 </main>
+</div>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

@@ -9,17 +9,13 @@
   <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
+<header th:replace="~{fragments/layout :: header('Wissensbasis', true)}"></header>
 <div class="workspace-shell">
   <aside class="reference-sidebar">
     <div class="reference-sidebar-head">
-      <div class="reference-brand">
-        <div class="reference-mark" aria-hidden="true">BR</div>
-        <div class="reference-brand-copy"><h1>Renten-Fachbot</h1><p>Fachbereich Rente · Intern</p></div>
-        <span class="local-tag">Lokal · Docker</span>
-      </div>
       <nav class="reference-tabs" aria-label="Bereiche">
-        <a class="reference-tab" th:href="@{/}">◉&nbsp; Chat</a>
-        <a class="reference-tab active" th:href="@{/admin}" aria-current="page">▤&nbsp; Wissen</a>
+        <a class="reference-tab" th:href="@{/}">Chat</a>
+        <a class="reference-tab active" th:href="@{/admin}" aria-current="page">Wissensbasis</a>
       </nav>
     </div>
 
@@ -32,11 +28,6 @@
       </div>
       <div class="reference-note"><strong>Import-Hinweis</strong>Bitte geben Sie für jedes Dokument eine aussagekräftige Kategorie und Quelle an. Unterstützt werden PDF, Word, Text und Markdown.</div>
     </section>
-
-    <footer class="reference-footer">
-      <span class="status-dot" aria-hidden="true"></span><span>Lokal · Docker · Spring Boot</span>
-      <form class="logout-form" method="post" th:action="@{/logout}"><button class="button-secondary" type="submit">Abmelden</button></form>
-    </footer>
   </aside>
 
   <main class="reference-main">
@@ -62,10 +53,13 @@
             <div class="form-field"><label class="field-label" for="quelle">Quelle</label><input id="quelle" name="quelle" class="text-field" placeholder="z. B. BetrAVG § 3"/></div>
             <div class="form-field"><label class="field-label" for="kategorie">Kategorie *</label><select id="kategorie" name="kategorie" class="select-field"><option>Auszahlung</option><option>Steuer</option><option>Unverfallbarkeit</option><option>Arbeitgeberwechsel</option><option>Recht</option><option>Prozess</option></select></div>
           </div>
+          <div class="pp-actions">
+          <button id="resetButton" type="reset" class="button button-danger">Zurücksetzen</button>
           <button id="uploadButton" type="submit" class="button button-primary upload-submit">
             <svg id="uploadSpinner" class="hidden animate-spin" style="width:17px;height:17px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity:.8" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-            <span id="uploadButtonText">Importieren &amp; Chunking starten</span>
+            <span id="uploadButtonText">Importieren</span>
           </button>
+          </div>
         </form>
         <div id="status" class="status-box hidden"></div>
       </section>
@@ -90,6 +84,8 @@
     </div>
   </main>
 </div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 
 <script>
 function showFile(inp){ if(inp.files[0]){ document.getElementById('fileName').innerText = inp.files[0].name + ' (' + Math.round(inp.files[0].size/1024) + ' KB)'; document.getElementById('fileName').classList.remove('hidden'); document.getElementById('dropText').classList.add('hidden'); } }
@@ -117,6 +113,11 @@ uploadDrop.addEventListener('drop', (e)=>{
   transfer.items.add(droppedFile);
   fileInput.files = transfer.files;
   showFile(fileInput);
+});
+document.getElementById('uploadForm').addEventListener('reset', ()=>{
+  document.getElementById('fileName').classList.add('hidden');
+  document.getElementById('dropText').classList.remove('hidden');
+  document.getElementById('status').classList.add('hidden');
 });
 document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
@@ -148,7 +149,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
     if (!imported) {
       button.disabled = false;
       spinner.classList.add('hidden');
-      buttonText.innerText = 'Importieren & Chunking starten';
+      buttonText.innerText = 'Importieren';
     }
   }
 });

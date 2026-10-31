@@ -9,24 +9,20 @@
   <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
+<header th:replace="~{fragments/layout :: header('Fachwissen-Chat', true)}"></header>
 <div class="workspace-shell">
   <aside class="reference-sidebar">
     <div class="reference-sidebar-head">
-      <div class="reference-brand">
-        <div class="reference-mark" aria-hidden="true">BR</div>
-        <div class="reference-brand-copy"><h1>Renten-Fachbot</h1><p>Fachbereich Rente · Intern</p></div>
-        <span class="local-tag">Lokal · Docker</span>
-      </div>
       <nav class="reference-tabs" aria-label="Bereiche">
-        <a class="reference-tab active" th:href="@{/}" aria-current="page">◉&nbsp; Chat</a>
-        <a class="reference-tab" th:if="${isAdmin}" th:href="@{/admin}">▤&nbsp; Wissen</a>
+        <a class="reference-tab active" th:href="@{/}" aria-current="page">Chat</a>
+        <a class="reference-tab" th:if="${isAdmin}" th:href="@{/admin}">Wissensbasis</a>
       </nav>
     </div>
 
     <section class="reference-section">
       <label class="reference-section-title" for="kategorie">Kategorie Filter</label>
       <select id="kategorie" class="select-field">
-        <option>Alle</option><option>Auszahlung</option><option>Steuer</option><option>Arbeitgeberwechsel</option>
+        <option th:each="k : ${kategorien}" th:value="${k}" th:text="${k}">Alle</option>
       </select>
     </section>
 
@@ -40,11 +36,6 @@
       </div>
       <div class="reference-note"><strong>Hinweis für Fachbereich</strong>Antworten aus freigegebenen Dokumenten. Keine Rechtsberatung. Bei Zweifelsfällen die zugrunde liegende Fachinformation prüfen.</div>
     </section>
-
-    <footer class="reference-footer">
-      <span class="status-dot" aria-hidden="true"></span><span>Lokal · Docker · Spring Boot</span>
-      <form class="logout-form" method="post" th:action="@{/logout}"><button class="button-secondary" type="submit">Abmelden</button></form>
-    </footer>
   </aside>
 
   <main class="reference-main">
@@ -72,6 +63,8 @@
   </main>
 </div>
 
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
 <script>
 document.querySelectorAll('[data-question]').forEach(button => {
     button.addEventListener('click', () => {
@@ -84,6 +77,12 @@ document.querySelectorAll('[data-question]').forEach(button => {
 const botAvatarIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2m16 0h2M9 13v2m6-2v2"/></svg>';
 const personAvatarIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>';
 
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : String(text);
+    return div.innerHTML;
+}
+
 async function senden() {
     const input = document.getElementById('frage');
     const button = document.getElementById('senden');
@@ -94,7 +93,7 @@ async function senden() {
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 
     const verlauf = document.getElementById('chatverlauf');
-    verlauf.innerHTML += `<div class="chat-row user-row"><div class="message"><div>${frage}</div></div><div class="avatar user-avatar">${personAvatarIcon}</div></div><div id="bot-loading" class="bot-message"><div class="avatar">${botAvatarIcon}</div><div class="message typing-message" role="status" aria-live="polite"><svg class="animate-spin" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity:.8" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>Antwort wird erstellt …</div></div>`;
+    verlauf.innerHTML += `<div class="chat-row user-row"><div class="message"><div>${escapeHtml(frage)}</div></div><div class="avatar user-avatar">${personAvatarIcon}</div></div><div id="bot-loading" class="bot-message"><div class="avatar">${botAvatarIcon}</div><div class="message typing-message" role="status" aria-live="polite"><svg class="animate-spin" style="width:16px;height:16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle style="opacity:.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity:.8" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>Antwort wird erstellt …</div></div>`;
     verlauf.scrollTop = verlauf.scrollHeight;
     input.value = '';
     input.disabled = true;
@@ -123,7 +122,7 @@ async function senden() {
             chip.title = `${q.kategorie}: ${q.text}`;
             return chip.outerHTML;
         }).join('');
-        verlauf.innerHTML += `<div class="bot-message"><div class="avatar">${botAvatarIcon}</div><div class="bot-message-content"><div class="message"><div class="answer-text">${data.antwort}</div><div class="message-meta">Antwortzeit (inkl. Übertragung): ${dauer}</div></div><div class="source-chips">${quellen}</div></div></div>`;
+        verlauf.innerHTML += `<div class="bot-message"><div class="avatar">${botAvatarIcon}</div><div class="bot-message-content"><div class="message"><div class="answer-text">${escapeHtml(data.antwort)}</div><div class="message-meta">Antwortzeit (inkl. Übertragung): ${dauer}</div></div><div class="source-chips">${quellen}</div></div></div>`;
         verlauf.scrollTop = verlauf.scrollHeight;
     } catch (error) {
         document.getElementById('bot-loading')?.remove();

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Kopfzeile im PenPay-Stil: Logo | Schrägstrich | Seitentitel -->
+<header class="pp-header" th:fragment="header(title, showLogout)">
+  <a class="pp-logo" th:href="@{/}" aria-label="Renten-Fachbot Startseite">
+    <span class="pp-logo-mark" aria-hidden="true">BR</span><span class="pp-logo-text">Renten-Fachbot</span>
+  </a>
+  <span class="pp-separator" aria-hidden="true"></span>
+  <h1 class="pp-title" th:text="${title}">Titel</h1>
+  <div class="pp-header-right">
+    <span class="pp-env" title="Lokale Umgebung (Docker)">LOKAL</span>
+    <form th:if="${showLogout}" class="logout-form" method="post" th:action="@{/logout}">
+      <button class="button button-nav" type="submit">Abmelden</button>
+    </form>
+  </div>
+</header>
+
+<!-- Fußzeile im PenPay-Stil -->
+<footer class="pp-footer" th:fragment="footer">
+  <span>© <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> adesso insurance solutions GmbH</span>
+  <span>Renten-Fachbot · nur freigegebenes Fachwissen</span>
+</footer>
+</body>
+</html>
