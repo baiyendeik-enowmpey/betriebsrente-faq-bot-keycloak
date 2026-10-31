@@ -23,7 +23,9 @@ spring:
           num-predict: 384
       embedding:
         options:
-          model: nomic-embed-text
+          # Mehrsprachiges Modell: Trefferquote im Testkatalog 93,9 % statt 79,6 % mit nomic-embed-text.
+          # Bei einem Wechsel baut die App den Vektor-Index beim Start automatisch neu auf (VektorIndexService).
+          model: nomic-embed-text-v2-moe
     vectorstore:
       pgvector:
         initialize-schema: true
@@ -34,8 +36,9 @@ spring:
 app:
   chunk: {size: 650}
   rag:
-    # Mindestähnlichkeit für Kontext-Abschnitte (siehe RagService.DEFAULT_SIMILARITY_THRESHOLD)
-    similarity-threshold: 0.60
+    # Mindestähnlichkeit für Kontext-Abschnitte – gilt nur für das konfigurierte Embedding-Modell!
+    # nomic-embed-text-v2-moe: stabiler Bereich 0,33–0,39 (alle fachfremden Testfragen abgelehnt).
+    similarity-threshold: 0.37
   keycloak:
     issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/betriebsrente}
     backchannel-issuer-uri: ${KEYCLOAK_BACKCHANNEL_ISSUER_URI:http://keycloak:8080/realms/betriebsrente}

@@ -201,6 +201,47 @@ public class AdminUiE2ETest {
     }
 
     @Test
+    public void qualityCheckShowsSummaryAndFailedQuestionsFirst() {
+        openAdminPage();
+        page.route("**/admin/qualitaet", route -> route.fulfill(new Route.FulfillOptions()
+                .setStatus(200)
+                .setContentType("application/json")
+                .setBody("""
+                        {"zeitpunkt":"2026-10-31T16:00:00Z","modus":"SUCHE","fachfragen":1,"fachfremdeFragen":1,
+                         "trefferQuote":1.0,"ablehnungsQuote":0.0,"antwortQuote":null,
+                         "schwellen":{"trefferQuote":0.9,"ablehnungsQuote":0.8,"antwortQuote":0.8},
+                         "bestanden":false,"dauerMs":1200,"ergebnisse":[
+                          {"id":"F01","frage":"Wie hoch ist der Freibetrag?","fachfremd":false,
+                           "erwarteteQuellen":["Grenzwerte 2026"],"gefundeneQuellen":["Grenzwerte 2026"],
+                           "sucheOk":true,"bestanden":true},
+                          {"id":"N01","frage":"<b>Apfelkuchen</b>?","fachfremd":true,"erwarteteQuellen":[],
+                           "gefundeneQuellen":["Zufallstreffer"],"sucheOk":false,"bestanden":false}]}
+                        """)));
+
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Qualität prüfen")).click();
+
+        page.locator("#qualitaetErgebnis:not(.hidden)").waitFor();
+        assertTrue(page.locator("#qualitaetZusammenfassung").textContent().contains("Nicht bestanden"));
+        assertTrue(page.locator("#qualitaetZusammenfassung").textContent().contains("Treffer: 100 %"));
+        assertEquals(page.locator("#qualitaetZeilen tr").first().locator("td").nth(1).textContent(), "N01",
+                "Failed questions are listed first");
+        assertTrue(page.locator("#qualitaetZeilen").textContent().contains("<b>Apfelkuchen</b>?"),
+                "Question text is escaped, not rendered as HTML");
+        assertEquals(page.locator("#qualitaetButton").textContent(), "Qualität prüfen");
+    }
+
+    @Test
+    public void qualityCheckShowsErrorWhenServerFails() {
+        openAdminPage();
+        page.route("**/admin/qualitaet", route -> route.fulfill(new Route.FulfillOptions().setStatus(500)));
+
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Qualität prüfen")).click();
+
+        page.locator("#qualitaetZusammenfassung.status-error").waitFor();
+        assertTrue(page.locator("#qualitaetZusammenfassung").textContent().contains("HTTP 500"));
+    }
+
+    @Test
     public void resetClearsSelectedFile() {
         openAdminPage();
         page.locator("#file").setInputFiles(new FilePayload("admin-guide.txt", "text/plain",

@@ -427,3 +427,10 @@ body { font-size: 14px; color: var(--ink); background: var(--pp-grey-bg); paddin
 .reference-note-warn { margin-bottom: 12px; border-left-color: var(--pp-red); background: #f7e9ec; }
 .reference-note-warn strong { color: var(--pp-red); }
 .source-chip-validity { font-weight: 400; color: #666; }
+
+/* Qualitätsprüfung */
+.quality-button { width: 100%; margin-top: 12px; }
+.quality-summary { margin-top: 12px; }
+.quality-card { width: min(100% - 48px, 1132px); margin: 18px auto 0; }
+.quality-table td { vertical-align: top; }
+.quality-fail td { background: #fbf2f4; }

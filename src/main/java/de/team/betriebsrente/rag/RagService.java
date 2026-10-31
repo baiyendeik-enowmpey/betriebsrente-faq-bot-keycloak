@@ -19,11 +19,11 @@ import org.springframework.stereotype.Service;
 public class RagService {
     static final int TOP_K = 3;
     /**
-     * Mindestähnlichkeit (Kosinus) eines Abschnitts. Gemessen mit nomic-embed-text (10/2026):
-     * Fachfragen 0,65–0,86, fachfremde Fragen 0,57–0,65. 0,60 filtert einen Teil der
-     * fachfremden Fragen, ohne Fachfragen zu verlieren; überschreibbar per app.rag.similarity-threshold.
+     * Mindestähnlichkeit (Kosinus) eines Abschnitts – abhängig vom Embedding-Modell. Gemessen mit
+     * nomic-embed-text-v2-moe (10/2026): bei 0,33–0,39 bleibt die Trefferquote bei 93,9 % und alle
+     * fachfremden Testfragen werden abgelehnt. Überschreibbar per app.rag.similarity-threshold.
      */
-    static final double DEFAULT_SIMILARITY_THRESHOLD = 0.60;
+    static final double DEFAULT_SIMILARITY_THRESHOLD = 0.37;
 
     /**
      * Antwort, wenn keine gültige, freigegebene Fachinfo gefunden wurde. Das Modell wird dann gar
@@ -60,7 +60,7 @@ public class RagService {
 
     @Autowired
     public RagService(VectorStore vectorStore, ChatClient.Builder builder,
-            @Value("${app.rag.similarity-threshold:0.60}") double similarityThreshold) {
+            @Value("${app.rag.similarity-threshold:0.37}") double similarityThreshold) {
         this(vectorStore, builder, Clock.systemDefaultZone(), similarityThreshold);
     }
 
@@ -79,6 +79,33 @@ public class RagService {
     }
 
     public Answer ask(String frage, String kategorieFilter) {
+        String query = frage == null ? "" : frage.strip();
+        List<Document> docs = sucheQuellen(query, kategorieFilter);
+        if (docs.isEmpty()) {
+            return new Answer(KEINE_FACHINFO, List.of());
+        }
+
+        String context = docs.stream()
+                .map(d -> String.format("[%s | %s | Quelle: %s]\n%s",
+                        d.getMetadata().get("titel"),
+                        d.getMetadata().get("kategorie"),
+                        d.getMetadata().get("quelle"),
+                        d.getText()))
+                .collect(Collectors.joining("\n\n---\n\n"));
+
+        String antwort = chatClient.prompt()
+                .system(s -> s.text(SYSTEM_PROMPT).param("context", context))
+                .user(query)
+                .call().content();
+
+        return new Answer(antwort, docs);
+    }
+
+    /**
+     * Sucht die Kontext-Abschnitte für eine Frage – genau so, wie sie {@link #ask} verwendet,
+     * aber ohne das Sprachmodell aufzurufen (z. B. für die Qualitätsprüfung).
+     */
+    public List<Document> sucheQuellen(String frage, String kategorieFilter) {
         String query = frage == null ? "" : frage.strip();
         boolean kategorieAktiv = kategorieFilter != null && !kategorieFilter.isBlank()
                 && !"Alle".equalsIgnoreCase(kategorieFilter);
@@ -100,24 +127,7 @@ public class RagService {
                             .equalsIgnoreCase(String.valueOf(d.getMetadata().get("kategorie"))))
                     .toList();
         }
-        if (docs.isEmpty()) {
-            return new Answer(KEINE_FACHINFO, List.of());
-        }
-
-        String context = docs.stream()
-                .map(d -> String.format("[%s | %s | Quelle: %s]\n%s",
-                        d.getMetadata().get("titel"),
-                        d.getMetadata().get("kategorie"),
-                        d.getMetadata().get("quelle"),
-                        d.getText()))
-                .collect(Collectors.joining("\n\n---\n\n"));
-
-        String antwort = chatClient.prompt()
-                .system(s -> s.text(SYSTEM_PROMPT).param("context", context))
-                .user(query)
-                .call().content();
-
-        return new Answer(antwort, docs);
+        return docs;
     }
 
     /** Nur heute gültiges Fachwissen; optional zusätzlich auf eine Kategorie eingeschränkt. */

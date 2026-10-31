@@ -15,7 +15,7 @@ A locally hosted, German-language question-answering application for internal te
 - Uses Keycloak for single sign-on, user accounts, passwords, and USER/ADMIN roles.
 - Includes a logout button in the chat interface.
 
-The application uses Spring Boot, Spring Security OAuth2 Login, Keycloak, Spring AI, Ollama, PostgreSQL/pgvector, and Thymeleaf. Ollama runs the chat model `llama3.2:3b` and embedding model `nomic-embed-text`.
+The application uses Spring Boot, Spring Security OAuth2 Login, Keycloak, Spring AI, Ollama, PostgreSQL/pgvector, and Thymeleaf. Ollama runs the chat model `llama3.2:3b` and embedding model `nomic-embed-text-v2-moe`.
 
 ## Run with Docker Compose
 
@@ -35,7 +35,7 @@ Download both required models into the persistent Ollama volume:
 
 ```sh
 docker compose exec -T ollama ollama pull llama3.2:3b
-docker compose exec -T ollama ollama pull nomic-embed-text
+docker compose exec -T ollama ollama pull nomic-embed-text-v2-moe
 ```
 
 Keycloak imports the `betriebsrente` realm, OIDC client, USER/ADMIN roles, and two local development accounts the first time it starts. Build and start the app:
@@ -47,6 +47,20 @@ docker compose up --build -d app
 Wait for the application to finish starting, then open <http://localhost:8091>. Login redirects to Keycloak at <http://localhost:8180>. The Keycloak Admin Console is available at <http://localhost:8180/admin>. On its first run with an empty application database, the bot imports the bundled seed knowledge automatically; this can take a few minutes while embeddings are generated.
 
 Compose credentials are local-development defaults. Override `KEYCLOAK_ADMIN_USERNAME`, `KEYCLOAK_ADMIN_PASSWORD`, `KEYCLOAK_DB_PASSWORD`, `KEYCLOAK_CLIENT_SECRET`, `KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD`, and `KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD` in a local `.env` file before exposing the services to other users or networks. Keycloak resolves the realm JSON placeholders from its environment during import.
+
+## Qualitätsprüfung (Testfragen-Katalog)
+
+`testdaten/eval_dataset.json` enthält Fachfragen mit erwarteter Quelle und Pflichtbegriffen sowie fachfremde Fragen, die abgelehnt werden müssen. Ein Pflichtbegriff darf Varianten enthalten (`"7 Tage|sieben Tage"`); Groß-/Kleinschreibung und Leerzeichen spielen keine Rolle. Ein Unit-Test stellt sicher, dass jede erwartete Quelle in `fachwissen_seed.json` existiert und jeder Wissenseintrag abgedeckt ist.
+
+- **Admin-Bereich:** Button „Qualität prüfen“ – prüft in wenigen Sekunden die Suche und listet fehlgeschlagene Fragen zuerst.
+- **Kommandozeile** (Exit-Code 0 = Ziele erreicht, 1 = nicht erreicht):
+
+```sh
+docker compose run --rm --no-deps app --eval                       # nur Suche, wenige Sekunden
+docker compose run --rm --no-deps app --eval --eval-modus=antwort  # inkl. Sprachmodell, ca. 20–30 Minuten
+```
+
+Optionen: `--eval=<katalog.json>`, `--eval-bericht=<datei.json>` (Standard `eval-bericht.json`). Zielwerte stehen unter `schwellen` im Katalog.
 
 ## UI-E2E-Tests
 
@@ -120,7 +134,7 @@ Install JDK 25, Maven, Docker, and Ollama. Start the dependencies with Compose, 
 ```sh
 docker compose up -d postgres ollama keycloak-db keycloak
 docker compose exec -T ollama ollama pull llama3.2:3b
-docker compose exec -T ollama ollama pull nomic-embed-text
+docker compose exec -T ollama ollama pull nomic-embed-text-v2-moe
 mvn spring-boot:run
 ```
 
@@ -139,13 +153,13 @@ Default settings are in `src/main/resources/application.yml`; the Compose servic
 | PostgreSQL database | `betriebsrente` |
 | PostgreSQL user | `botuser` |
 | Chat model | `llama3.2:3b` |
-| Embedding model | `nomic-embed-text` |
+| Embedding model | `nomic-embed-text-v2-moe` |
 | Ollama model load timeout | 10 minutes |
 | Chunk size / overlap | 650 tokens / 20% |
 
 Spring configuration can be overridden using its environment-variable equivalents, such as `SPRING_DATASOURCE_URL`, `SPRING_AI_OLLAMA_BASE_URL`, `SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL`, `KEYCLOAK_ISSUER_URI`, and `KEYCLOAK_BACKCHANNEL_ISSUER_URI`. Use the `KEYCLOAK_*` variables in a local `.env` file to change Keycloak admin, database, client, and initial realm-user credentials. If you change the Keycloak public hostname, update `KC_HOSTNAME` and `KEYCLOAK_ISSUER_URI`, then adjust the OIDC client redirect URI.
 
-For local CPU-only deployments, `llama3.2:3b` uses less memory than the previous 8B model and can improve response time. First requests can still be slow while Ollama loads the models; GPU acceleration can help further. The embedding model remains `nomic-embed-text` so existing vector entries remain compatible.
+For local CPU-only deployments, `llama3.2:3b` uses less memory than the previous 8B model and can improve response time. First requests can still be slow while Ollama loads the models; GPU acceleration can help further. The embedding model remains `nomic-embed-text-v2-moe` so existing vector entries remain compatible.
 
 ## Build and tests
 

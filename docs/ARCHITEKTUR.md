@@ -8,7 +8,7 @@ Es verlassen keine Daten die lokale Umgebung.
 | Bereich | Technologie |
 |---|---|
 | Laufzeit | Java 25, Spring Boot 4.1.2 (Spring MVC, Thymeleaf, Data JPA / Hibernate 7) |
-| KI | Spring AI 2.0.2, Ollama (`llama3.2:3b` für Antworten, `nomic-embed-text` für Embeddings, 768 Dimensionen) |
+| KI | Spring AI 2.0.2, Ollama (`llama3.2:3b` für Antworten, `nomic-embed-text-v2-moe` für Embeddings, mehrsprachig, 768 Dimensionen) |
 | Datenhaltung | PostgreSQL 16 + pgvector (HNSW-Index, Kosinus-Distanz), Flyway-Migrationen |
 | Authentifizierung | Keycloak 26 (OIDC Authorization Code + PKCE), Spring Security OAuth2 Client |
 | Dokumentverarbeitung | PDFBox 3 (PDF), Apache POI (DOCX), Tess4J/Tesseract (OCR, aktuell nicht angebunden) |
@@ -139,10 +139,11 @@ de.team.betriebsrente
 ├── BetriebsrenteBotApplication      Einstiegspunkt
 ├── config/                          SecurityConfig, LoginController
 ├── controller/                      ChatController, AdminController, AdminImportController
-├── model/                           JPA-Entitäten: Fachwissen, FachwissenChunks, AuditLog, ChatHistory
+├── eval/                            Qualitätsprüfung: EvalKatalog, EvalService, EvalRunner (CLI), QualitaetController
+├── model/                           JPA-Entitäten: Fachwissen, FachwissenChunks, AuditLog, ChatHistory; Gueltigkeit
 ├── repository/                      FachwissenRepository
 └── rag/                             RagService, ChunkingService, DocumentParserService,
-                                     IngestionService, SeedDataInitializer,
+                                     IngestionService, SeedDataInitializer, SeedSyncService,
                                      AuditService, ChatExportService, OcrService
 ```
 
@@ -241,9 +242,14 @@ sequenceDiagram
 2. Altdaten aus `fachwissen_chunks`,
 3. den Eintrag in `fachwissen`.
 
-### 4.5 Seed-Abgleich beim Start
+### 4.5 Index- und Seed-Abgleich beim Start
 
-`SeedDataInitializer` ruft beim Start den `SeedSyncService` auf. Dieser vergleicht die SHA-256-Prüfsumme
+Zuerst prüft der `VektorIndexService`, ob `vector_store` mit dem konfigurierten Embedding-Modell und der
+konfigurierten Dimension aufgebaut wurde (Protokoll in `vektor_index`). Bei einem Modellwechsel werden alle
+Textabschnitte samt Metadaten gelesen, die Tabelle geleert, die Spalte `embedding` bei Bedarf auf die neue
+Dimension umgestellt und alles mit dem neuen Modell neu eingebettet (30 Abschnitte: ca. 15 s).
+
+Danach ruft `SeedDataInitializer` den `SeedSyncService` auf. Dieser vergleicht die SHA-256-Prüfsumme
 von `testdaten/fachwissen_seed.json` mit dem letzten Eintrag in `seed_import`. Hat sich die Datei geändert
 (oder wurde noch nie importiert), werden alle Einträge mit `erstellt_von = 'seed'` samt Vektoren entfernt und
 neu importiert – Admin-Uploads bleiben unberührt. Bei unveränderter Datei passiert nichts. Anschließend erhalten
@@ -271,6 +277,13 @@ erDiagram
         date gueltig_ab "NULL = sofort"
         date gueltig_bis "NULL = unbefristet"
         timestamp created_at
+    }
+    vektor_index {
+        bigserial id PK
+        varchar embedding_modell
+        int dimensionen
+        int abschnitte
+        timestamp aufgebaut_am
     }
     seed_import {
         bigserial id PK
@@ -306,7 +319,7 @@ erDiagram
     }
 ```
 
-- `fachwissen`, `fachwissen_chunks`, `audit_log`, `chat_history`, `seed_import`: per **Flyway** (`V1`–`V3`); Hibernate läuft mit `ddl-auto: validate`.
+- `fachwissen`, `fachwissen_chunks`, `audit_log`, `chat_history`, `seed_import`, `vektor_index`: per **Flyway** (`V1`–`V4`); Hibernate läuft mit `ddl-auto: validate`.
 - **Gültigkeit:** `gueltig_ab`/`gueltig_bis` stehen in `fachwissen` und als Zahl `yyyyMMdd` in den Vektor-Metadaten (offen = `0` bzw. `99991231`), damit die Suche per pgvector-Filter nur heute gültiges Wissen verwendet. Der Admin zeigt den Status (gültig, läuft in ≤ 60 Tagen ab, abgelaufen, noch nicht gültig).
 - `vector_store`: wird von **Spring AI** angelegt (`initialize-schema: true`) und ist die eigentliche Wissensbasis der Suche.
 - `fachwissen_chunks`, `audit_log`, `chat_history` werden derzeit nicht beschrieben.
@@ -335,12 +348,12 @@ erDiagram
 | `spring.ai.ollama.chat.options.model` | `llama3.2:3b` | Antwortmodell |
 | `…chat.options.temperature` | `0.2` | Wenig Variation, faktentreu |
 | `…chat.options.num-predict` | `384` | Max. Antwortlänge in Tokens |
-| `spring.ai.ollama.embedding.options.model` | `nomic-embed-text` | Embedding-Modell (768 Dim.) |
+| `spring.ai.ollama.embedding.options.model` | `nomic-embed-text-v2-moe` | Embedding-Modell (768 Dim.); Wechsel löst automatischen Index-Neuaufbau aus |
 | `spring.ai.vectorstore.pgvector.*` | HNSW, `COSINE_DISTANCE`, 768 | Vektorindex |
 | `app.chunk.size` | `650` | Abschnittsgröße in Tokens |
 | `app.keycloak.issuer-uri` / `backchannel-issuer-uri` | `localhost:8180` / `keycloak:8080` | Öffentlicher bzw. interner Keycloak |
 | `app.ocr.*` | `deu+eng` | OCR-Einstellungen (Service nicht angebunden) |
-| `app.rag.similarity-threshold` | `0.60` | Mindestähnlichkeit der Kontextabschnitte. Gemessen (10/2026): Fachfragen 0,65–0,86, fachfremde 0,57–0,65 |
+| `app.rag.similarity-threshold` | `0.37` | Mindestähnlichkeit der Kontextabschnitte, **modellabhängig**. Mit v2-moe stabil bei 0,33–0,39 (93,9 % Treffer, alle fachfremden Testfragen abgelehnt) |
 | `RagService.TOP_K` | `3` | Anzahl der Kontextabschnitte (im Code) |
 
 ---
@@ -349,19 +362,20 @@ erDiagram
 
 | Ebene | Umfang | Ausführung |
 |---|---|---|
-| Unit-Tests | 35 Tests (JUnit 5 + Mockito) für Controller, Services, Security | `mvn verify` (benötigt JDK 25) |
+| Unit-Tests | 44 Tests (JUnit 5 + Mockito) für Controller, Services, Security | `mvn verify` (benötigt JDK 25) |
 | UI-E2E | Playwright + TestNG für Chat und Admin, Backend-Antworten simuliert | `mvn -Pe2e … exec:java` (siehe README) |
 | Coverage | JaCoCo-Report in `target/site/jacoco` | Phase `verify` |
-| Bewertungsdaten | `testdaten/eval_dataset.json` | Manuelle Auswertung |
+| Qualitätsprüfung | `testdaten/eval_dataset.json`: 49 Fachfragen (erwartete Quelle + Pflichtbegriffe, inkl. aller „Häufigen Fragen“ des Chats), 8 fachfremde Fragen; `EvalService` misst Trefferquote der Suche, Ablehnungsquote und optional Antwortquote | Admin-Button „Qualität prüfen“ (Suche) oder `--eval [--eval-modus=antwort]` (Exit-Code) |
 
 ---
 
 ## 9. Bekannte Grenzen und nächste Schritte
 
-1. **Trennschärfe der Suche:** `nomic-embed-text` trennt deutsche Fach- und fachfremde Fragen kaum (Abstand ≈ 0,003). Ein mehrsprachiges Embedding-Modell (z. B. `bge-m3`) plus hybride Suche ist der nächste Hebel.
-2. **Antwortzeit:** Die Inferenz läuft nur auf der CPU. Mit 6 vCPUs/8 GB dauert eine Antwort etwa 20–60 s, unter 5 s geht es nur mit GPU.
-3. **Nicht angebundene Funktionen:** `AuditService` (Audit-Log, Chatverlauf), `ChatExportService` (PDF-Export) und `OcrService` (gescannte PDFs) sind implementiert, werden aber nirgends aufgerufen.
-4. **Altlast `fachwissen_chunks`:** Die Tabelle ist leer und wird nicht genutzt. Sie könnte per Flyway-Migration entfernt werden.
-5. **Kein Chunk-Overlap:** `TokenTextSplitter` unterstützt keine Überlappung zwischen Abschnitten.
-6. **`.doc` (Word 97–2003)** wird wie DOCX behandelt und schlägt beim Parsen fehl. Dafür wäre `HWPFDocument` nötig.
-7. **Keine Streaming-Antworten:** Die UI wartet auf die vollständige Antwort. Mit `ChatClient.stream()` und SSE würde die gefühlte Wartezeit deutlich sinken.
+1. **Suche:** Mit `nomic-embed-text-v2-moe` findet die Suche bei 46 von 49 Testfragen die richtige Quelle (vorher 39). Fragen nach wörtlichen Begriffen („Wie viele Meldegründe …“) verfehlt sie noch – Abhilfe: hybride Suche (Vektor + PostgreSQL-Volltext).
+2. **Sprachmodell:** `llama3.2:3b` widerspricht in Einzelfällen dem gefundenen Kontext oder lehnt trotz passender Quelle ab (Antwortmodus der Qualitätsprüfung).
+3. **Antwortzeit:** Die Inferenz läuft nur auf der CPU. Mit 6 vCPUs/8 GB dauert eine Antwort etwa 20–60 s, unter 5 s geht es nur mit GPU.
+4. **Nicht angebundene Funktionen:** `AuditService` (Audit-Log, Chatverlauf), `ChatExportService` (PDF-Export) und `OcrService` (gescannte PDFs) sind implementiert, werden aber nirgends aufgerufen.
+5. **Altlast `fachwissen_chunks`:** Die Tabelle ist leer und wird nicht genutzt. Sie könnte per Flyway-Migration entfernt werden.
+6. **Kein Chunk-Overlap:** `TokenTextSplitter` unterstützt keine Überlappung zwischen Abschnitten.
+7. **`.doc` (Word 97–2003)** wird wie DOCX behandelt und schlägt beim Parsen fehl. Dafür wäre `HWPFDocument` nötig.
+8. **Keine Streaming-Antworten:** Die UI wartet auf die vollständige Antwort. Mit `ChatClient.stream()` und SSE würde die gefühlte Wartezeit deutlich sinken.

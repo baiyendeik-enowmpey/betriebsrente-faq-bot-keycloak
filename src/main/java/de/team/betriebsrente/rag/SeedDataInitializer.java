@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 @Configuration
 public class SeedDataInitializer {
@@ -18,9 +19,12 @@ public class SeedDataInitializer {
             "src/main/resources/testdaten/fachwissen_seed.json");
 
     @Bean
-    public ApplicationRunner seedOnEmpty(SeedSyncService seedSync) {
+    @Order(0) // vor der Qualitätsprüfung (EvalRunner)
+    public ApplicationRunner seedOnEmpty(VektorIndexService vektorIndex, SeedSyncService seedSync) {
         return args -> {
             try {
+                // Zuerst den Index an ein ggf. geändertes Embedding-Modell anpassen, dann Seed-Daten abgleichen.
+                vektorIndex.abgleichen();
                 File seedDatei = SEED_PFADE.stream().map(File::new).filter(File::isFile).findFirst().orElse(null);
                 if (seedDatei == null) {
                     log.info("Kein Seed-File gefunden – Fachwissen bitte über /admin hochladen");

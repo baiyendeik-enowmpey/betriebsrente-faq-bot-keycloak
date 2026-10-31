@@ -29,6 +29,13 @@
       <div class="reference-note reference-note-warn" th:if="${abgelaufenCount > 0}"><strong th:text="|${abgelaufenCount} Dokument(e) abgelaufen|">Abgelaufen</strong>Abgelaufene Dokumente werden im Chat nicht mehr verwendet. Bitte aktualisieren oder löschen.</div>
       <div class="reference-note"><strong>Import-Hinweis</strong>Bitte geben Sie für jedes Dokument eine aussagekräftige Kategorie und Quelle an. Für jährlich wechselnde Werte (z. B. Rechengrößen) bitte „Gültig bis“ setzen. Unterstützt werden PDF, Word, Text und Markdown.</div>
     </section>
+
+    <section class="reference-section">
+      <span class="reference-section-title">Qualitätsprüfung</span>
+      <p class="admin-sidebar-copy">Prüft mit dem Testfragen-Katalog, ob die Suche zu jeder Fachfrage die richtige Quelle findet und fachfremde Fragen ablehnt. Dauert wenige Sekunden.</p>
+      <button id="qualitaetButton" type="button" class="button button-nav quality-button" onclick="qualitaetPruefen()">Qualität prüfen</button>
+      <div id="qualitaetZusammenfassung" class="quality-summary hidden" aria-live="polite"></div>
+    </section>
   </aside>
 
   <main class="reference-main">
@@ -36,6 +43,16 @@
       <h2>Wissensbasis verwalten</h2>
       <span class="reference-live"><span class="status-dot"></span><span th:text="|${docCount} freigegeben|">0 freigegeben</span></span>
     </header>
+
+    <section id="qualitaetErgebnis" class="surface-card quality-card hidden" aria-live="polite">
+      <div class="documents-column-head"><h3>Ergebnis der Qualitätsprüfung</h3><span id="qualitaetZeit" class="eyebrow"></span></div>
+      <div class="table-wrap">
+        <table class="documents-table quality-table">
+          <thead><tr><th>Status</th><th>Nr.</th><th>Frage</th><th>Erwartet</th><th>Gefunden (Top 3)</th></tr></thead>
+          <tbody id="qualitaetZeilen"></tbody>
+        </table>
+      </div>
+    </section>
 
     <div class="admin-reference-content">
       <section class="surface-card admin-form-card">
@@ -164,6 +181,39 @@ document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
     }
   }
 });
+function htmlText(text){ const d=document.createElement('div'); d.textContent = text == null ? '' : String(text); return d.innerHTML; }
+function prozent(wert){ return (wert*100).toLocaleString('de-DE',{maximumFractionDigits:1}) + ' %'; }
+async function qualitaetPruefen(){
+  const button = document.getElementById('qualitaetButton');
+  const zusammenfassung = document.getElementById('qualitaetZusammenfassung');
+  const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+  const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+  button.disabled = true; button.innerText = 'Prüfung läuft…';
+  zusammenfassung.className = 'quality-summary status-box status-pending'; zusammenfassung.innerText = 'Testfragen werden geprüft…';
+  try {
+    const res = await fetch('/admin/qualitaet', {method:'POST', headers:{[csrfHeader]:csrfToken}});
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const b = await res.json();
+    zusammenfassung.className = 'quality-summary status-box ' + (b.bestanden ? 'status-success' : 'status-error');
+    zusammenfassung.innerHTML = `<strong>${b.bestanden ? 'Bestanden' : 'Nicht bestanden'}</strong><br>`
+      + `Treffer: ${prozent(b.trefferQuote)} (Ziel ${prozent(b.schwellen.trefferQuote)}, ${b.fachfragen} Fachfragen)<br>`
+      + `Ablehnung fachfremder Fragen: ${prozent(b.ablehnungsQuote)} (Ziel ${prozent(b.schwellen.ablehnungsQuote)})`;
+    document.getElementById('qualitaetZeit').innerText = new Date(b.zeitpunkt).toLocaleString('de-DE');
+    document.getElementById('qualitaetZeilen').innerHTML = b.ergebnisse
+      .slice().sort((x, y) => Number(x.bestanden) - Number(y.bestanden))
+      .map(e => `<tr class="${e.bestanden ? '' : 'quality-fail'}"><td><span class="validity-badge ${e.bestanden ? 'validity-ok' : 'validity-expired'}">${e.bestanden ? 'OK' : 'Fehler'}</span></td>`
+        + `<td>${htmlText(e.id)}</td><td>${htmlText(e.frage)}</td>`
+        + `<td>${e.fachfremd ? '<em>keine Treffer</em>' : htmlText(e.erwarteteQuellen.join(' / '))}</td>`
+        + `<td>${e.gefundeneQuellen.length ? htmlText(e.gefundeneQuellen.join(' | ')) : '<em>keine Treffer</em>'}</td></tr>`)
+      .join('');
+    document.getElementById('qualitaetErgebnis').classList.remove('hidden');
+  } catch (error) {
+    zusammenfassung.className = 'quality-summary status-box status-error';
+    zusammenfassung.innerText = 'Qualitätsprüfung fehlgeschlagen: ' + error.message;
+  } finally {
+    button.disabled = false; button.innerText = 'Qualität prüfen';
+  }
+}
 async function loeschen(btn){ if(!confirm('Wirklich löschen? Chunks + Vektoren werden entfernt.')) return; const id=btn.getAttribute('data-id'); const csrfToken=document.querySelector('meta[name="_csrf"]').content; const csrfHeader=document.querySelector('meta[name="_csrf_header"]').content; const res=await fetch('/admin/'+id,{method:'DELETE',headers:{[csrfHeader]:csrfToken}}); location.reload(); }
 </script>
 </body>

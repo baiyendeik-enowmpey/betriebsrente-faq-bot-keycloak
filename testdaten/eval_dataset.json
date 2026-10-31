@@ -1,5 +1,574 @@
-[
-  {"frage":"Wie lange vorher muss Kapitalauszahlung beantragt werden?","muss_enthalten":["5 Jahre"]},
-  {"frage":"Gilt Versorgungsfreibetrag für Einmalkapital?","muss_enthalten":["NICHT","§19"]},
-  {"frage":"Wann ist Betriebsrente unverfallbar?","muss_enthalten":["21 Jahre","3 Jahre"]}
-]
+{
+  "beschreibung": "Testfragen-Katalog für den Renten-Fachbot. Fachfragen (F..) prüfen, ob die erwartete Quelle unter den Top-3 der Suche ist und die Antwort alle Pflichtbegriffe enthält ('a|b' = eine der Varianten, Groß-/Kleinschreibung und Leerzeichen egal). Fachfremde Fragen (N..) müssen abgelehnt werden. H-Fragen sind die 'Häufigen Fragen' aus der Chat-Seitenleiste – jeder Vorschlag muss beantwortbar sein.",
+  "schwellen": {
+    "treffer_quote": 0.9,
+    "ablehnungs_quote": 0.8,
+    "antwort_quote": 0.8
+  },
+  "fragen": [
+    {
+      "id": "F01",
+      "frage": "Wie früh muss ein Mitarbeiter die Kapitalauszahlung seiner Direktzusage beantragen?",
+      "erwartete_quelle": [
+        "Auszahlung Direktzusage - Einmalkapital"
+      ],
+      "muss_enthalten": [
+        "5 Jahre|fünf Jahre"
+      ]
+    },
+    {
+      "id": "F02",
+      "frage": "Ab wann ist eine Anwartschaft auf Betriebsrente unverfallbar?",
+      "erwartete_quelle": [
+        "Arbeitgeberwechsel",
+        "Auszahlung Direktzusage - Einmalkapital"
+      ],
+      "muss_enthalten": [
+        "21",
+        "3 Jahre|drei Jahre"
+      ]
+    },
+    {
+      "id": "F03",
+      "frage": "Bekommt man bei einer Kapitalauszahlung den Versorgungsfreibetrag?",
+      "erwartete_quelle": [
+        "Versteuerung Einmalkapital",
+        "Rente vs Kapital"
+      ],
+      "muss_enthalten": [
+        "nicht|kein"
+      ]
+    },
+    {
+      "id": "F04",
+      "frage": "Kann für eine Einmalkapitalzahlung die Fünftelregelung genutzt werden?",
+      "erwartete_quelle": [
+        "Versteuerung Einmalkapital",
+        "Rente vs Kapital"
+      ],
+      "muss_enthalten": [
+        "fünftel|fuenftel"
+      ]
+    },
+    {
+      "id": "F05",
+      "frage": "Über wie viele Monate wird eine Kapitalleistung in der Krankenversicherung verbeitragt?",
+      "erwartete_quelle": [
+        "ZMV: Umgang mit Kapitalleistungen",
+        "Versteuerung Einmalkapital"
+      ],
+      "muss_enthalten": [
+        "120"
+      ]
+    },
+    {
+      "id": "F06",
+      "frage": "Was kann ein neuer Arbeitgeber mit einer bestehenden Betriebsrentenzusage machen?",
+      "erwartete_quelle": [
+        "Arbeitgeberwechsel"
+      ],
+      "muss_enthalten": [
+        "übertrag|uebertrag|übernehm|uebernehm"
+      ]
+    },
+    {
+      "id": "F07",
+      "frage": "Darf der Arbeitgeber bei der Wahl zwischen Rente und Kapital steuerlich beraten?",
+      "erwartete_quelle": [
+        "Rente vs Kapital"
+      ],
+      "muss_enthalten": [
+        "steuerberatung|steuerliche beratung|steuerlich beraten"
+      ]
+    },
+    {
+      "id": "F08",
+      "frage": "Kann die Entscheidung zwischen Rente und Kapital später geändert werden?",
+      "erwartete_quelle": [
+        "Rente vs Kapital"
+      ],
+      "muss_enthalten": [
+        "unwiderruflich"
+      ]
+    },
+    {
+      "id": "F09",
+      "frage": "Was ist das Zahlstellen-Meldeverfahren?",
+      "erwartete_quelle": [
+        "Grundlage Zahlstellen-Meldeverfahren",
+        "ZMV: Grundlagen für neue Kollegen"
+      ],
+      "muss_enthalten": [
+        "krankenkasse"
+      ]
+    },
+    {
+      "id": "F10",
+      "frage": "Welche Versorgungsbezüge müssen an die Krankenkasse gemeldet werden?",
+      "erwartete_quelle": [
+        "Meldepflichtige Versorgungsbezüge"
+      ],
+      "muss_enthalten": [
+        "direktversicherung|pensionskasse|direktzusage|unterstützungskasse"
+      ]
+    },
+    {
+      "id": "F11",
+      "frage": "Welche Nummer braucht unsere Firma als Zahlstelle für das Meldeverfahren?",
+      "erwartete_quelle": [
+        "Einrichtung für Unternehmen"
+      ],
+      "muss_enthalten": [
+        "8-stellig|achtstellig|8 stellig|8stellig"
+      ]
+    },
+    {
+      "id": "F12",
+      "frage": "Über welches Portal kann eine Zahlstelle ohne Entgeltsoftware melden?",
+      "erwartete_quelle": [
+        "Einrichtung für Unternehmen"
+      ],
+      "muss_enthalten": [
+        "sv-meldeportal"
+      ]
+    },
+    {
+      "id": "F13",
+      "frage": "Wie hoch ist 2026 der Freibetrag für Betriebsrenten in der Krankenversicherung?",
+      "erwartete_quelle": [
+        "Grenzwerte und Freibeträge 2026",
+        "ZMV: Freibetrag vs Freigrenze KV/PV 2026"
+      ],
+      "muss_enthalten": [
+        "197,75"
+      ]
+    },
+    {
+      "id": "F14",
+      "frage": "Was passiert in der Pflegeversicherung, wenn die Betriebsrente einen Cent über der Grenze liegt?",
+      "erwartete_quelle": [
+        "ZMV: Freibetrag vs Freigrenze KV/PV 2026",
+        "Grenzwerte und Freibeträge 2026"
+      ],
+      "muss_enthalten": [
+        "gesamt"
+      ]
+    },
+    {
+      "id": "F15",
+      "frage": "Ist die Grenze von 197,75 Euro in der Pflegeversicherung ein Freibetrag oder eine Freigrenze?",
+      "erwartete_quelle": [
+        "ZMV: Freibetrag vs Freigrenze KV/PV 2026",
+        "Grenzwerte und Freibeträge 2026"
+      ],
+      "muss_enthalten": [
+        "freigrenze"
+      ]
+    },
+    {
+      "id": "F16",
+      "frage": "Bis wann muss der Beginn eines Versorgungsbezugs gemeldet werden?",
+      "erwartete_quelle": [
+        "Gesetzliche Meldefristen"
+      ],
+      "muss_enthalten": [
+        "monat"
+      ]
+    },
+    {
+      "id": "F17",
+      "frage": "Bis wann muss eine Rentenanpassung an die Krankenkasse gemeldet sein?",
+      "erwartete_quelle": [
+        "Gesetzliche Meldefristen",
+        "ZMV: Die 4 Meldegründe im System"
+      ],
+      "muss_enthalten": [
+        "folgemonat"
+      ]
+    },
+    {
+      "id": "F18",
+      "frage": "Mit welchem Baustein meldet die Zahlstelle einen Versorgungsbezug im DSVZ-Dialog?",
+      "erwartete_quelle": [
+        "Technischer Ablauf DSVZ-Verfahren",
+        "ZMV: Die 4 Meldegründe im System"
+      ],
+      "muss_enthalten": [
+        "dbzk"
+      ]
+    },
+    {
+      "id": "F19",
+      "frage": "Mit welchem Baustein schickt die Krankenkasse die Beitragswerte zurück?",
+      "erwartete_quelle": [
+        "Technischer Ablauf DSVZ-Verfahren",
+        "ZMV: Inhalt des Zahlstellen-Beitragsnachweises",
+        "Beitragsnachweis an die Krankenkassen"
+      ],
+      "muss_enthalten": [
+        "dbkz"
+      ]
+    },
+    {
+      "id": "F20",
+      "frage": "Welchen Abgabegrund nutze ich, wenn ein Rentner verstirbt?",
+      "erwartete_quelle": [
+        "ZMV: Die 4 Meldegründe im System"
+      ],
+      "muss_enthalten": [
+        "3"
+      ]
+    },
+    {
+      "id": "F21",
+      "frage": "Wofür ist eine Vorabbescheinigung im Zahlstellenverfahren gedacht?",
+      "erwartete_quelle": [
+        "ZMV: Die 4 Meldegründe im System"
+      ],
+      "muss_enthalten": [
+        "vor"
+      ]
+    },
+    {
+      "id": "F22",
+      "frage": "Welche Daten muss ich bei einem neuen Rentenempfänger zwingend erfassen?",
+      "erwartete_quelle": [
+        "ZMV: Grundlagen für neue Kollegen"
+      ],
+      "muss_enthalten": [
+        "steuer-id|steuer-identifikationsnummer|steueridentifikationsnummer|steuerid",
+        "krankenkasse"
+      ]
+    },
+    {
+      "id": "F23",
+      "frage": "Was mache ich, wenn die Krankenkasse eine Meldung mit Fehlercode zurückschickt?",
+      "erwartete_quelle": [
+        "ZMV/DaBPV: Fehlerbehebung bei Rückweisungen",
+        "Fehlermeldungen und Troubleshooting"
+      ],
+      "muss_enthalten": [
+        "storn|korrig"
+      ]
+    },
+    {
+      "id": "F24",
+      "frage": "Woran kann es liegen, dass eine Krankenkasse 'Person nicht versichert' zurückmeldet?",
+      "erwartete_quelle": [
+        "ZMV/DaBPV: Fehlerbehebung bei Rückweisungen",
+        "Fehlermeldungen und Troubleshooting"
+      ],
+      "muss_enthalten": [
+        "gewechselt|wechsel"
+      ]
+    },
+    {
+      "id": "F25",
+      "frage": "Was ist das DaBPV?",
+      "erwartete_quelle": [
+        "Grundlage DaBPV-Verfahren",
+        "DaBPV: Relevanz für die Rentenabteilung"
+      ],
+      "muss_enthalten": [
+        "pflege"
+      ]
+    },
+    {
+      "id": "F26",
+      "frage": "Seit wann ist das DaBPV verpflichtend?",
+      "erwartete_quelle": [
+        "Verpflichtender Einsatz & Fristen",
+        "DaBPV: Relevanz für die Rentenabteilung"
+      ],
+      "muss_enthalten": [
+        "01.07.2025|1. juli 2025|juli 2025|1.7.2025"
+      ]
+    },
+    {
+      "id": "F27",
+      "frage": "Innerhalb welcher Frist muss der DaBPV-Abruf bei einem neuen Rentenbezieher erfolgen?",
+      "erwartete_quelle": [
+        "DaBPV: Fristen bei Neueinstellungen",
+        "Verpflichtender Einsatz & Fristen"
+      ],
+      "muss_enthalten": [
+        "7 tage|sieben tage"
+      ]
+    },
+    {
+      "id": "F28",
+      "frage": "Bis wann musste der Initialabruf für Bestandsfälle im DaBPV abgeschlossen sein?",
+      "erwartete_quelle": [
+        "Verpflichtender Einsatz & Fristen"
+      ],
+      "muss_enthalten": [
+        "31.12.2025|31. dezember 2025"
+      ]
+    },
+    {
+      "id": "F29",
+      "frage": "Über welche Stellen läuft der DaBPV-Datenstrom bis zum Bundeszentralamt für Steuern?",
+      "erwartete_quelle": [
+        "Technischer Ablauf und Behörden"
+      ],
+      "muss_enthalten": [
+        "dsrv|datenstelle"
+      ]
+    },
+    {
+      "id": "F30",
+      "frage": "Muss ich die Kinderanzahl für den Pflegebeitrag jeden Monat neu abfragen?",
+      "erwartete_quelle": [
+        "Das DaBPV Abonnement-Prinzip",
+        "DaBPV: Das automatische Abo-Prinzip"
+      ],
+      "muss_enthalten": [
+        "abo|automatisch"
+      ]
+    },
+    {
+      "id": "F31",
+      "frage": "Was passiert im Pflegebeitrag, wenn das Kind eines Rentners 25 Jahre alt wird?",
+      "erwartete_quelle": [
+        "DaBPV: Das automatische Abo-Prinzip",
+        "Das DaBPV Abonnement-Prinzip"
+      ],
+      "muss_enthalten": [
+        "bzst|automatisch|änderung"
+      ]
+    },
+    {
+      "id": "F32",
+      "frage": "Wann brauche ich trotz DaBPV noch eine Geburtsurkunde?",
+      "erwartete_quelle": [
+        "Ausnahmen und manuelle Nachweise",
+        "DaBPV: Ausnahmen (Wann Papier nötig ist)"
+      ],
+      "muss_enthalten": [
+        "ausland"
+      ]
+    },
+    {
+      "id": "F33",
+      "frage": "Wie lange gilt die Nachweisfrist, wenn Kinderdaten manuell nachgereicht werden müssen?",
+      "erwartete_quelle": [
+        "DaBPV: Ausnahmen (Wann Papier nötig ist)"
+      ],
+      "muss_enthalten": [
+        "6 monat|sechs monat"
+      ]
+    },
+    {
+      "id": "F34",
+      "frage": "Muss ich von Rentnern noch Geburtsurkunden für den Pflegebeitrag anfordern?",
+      "erwartete_quelle": [
+        "DaBPV: Relevanz für die Rentenabteilung",
+        "Ausnahmen und manuelle Nachweise",
+        "DaBPV: Ausnahmen (Wann Papier nötig ist)"
+      ],
+      "muss_enthalten": [
+        "steuer-id|bzst|automatisch|bundeszentralamt"
+      ]
+    },
+    {
+      "id": "F35",
+      "frage": "Wann sind Beiträge aus Versorgungsbezügen fällig?",
+      "erwartete_quelle": [
+        "ZMV: Fälligkeit und Beitragsnachweis",
+        "Beitragsnachweis an die Krankenkassen"
+      ],
+      "muss_enthalten": [
+        "15."
+      ]
+    },
+    {
+      "id": "F36",
+      "frage": "Bis wann muss der Beitragsnachweis für Versorgungsbezüge bei der Krankenkasse vorliegen?",
+      "erwartete_quelle": [
+        "ZMV: Fälligkeit und Beitragsnachweis",
+        "Beitragsnachweis an die Krankenkassen"
+      ],
+      "muss_enthalten": [
+        "2 arbeitstage|zwei arbeitstage|13."
+      ]
+    },
+    {
+      "id": "F37",
+      "frage": "Was droht, wenn der Beitragsnachweis zu spät bei der Krankenkasse ankommt?",
+      "erwartete_quelle": [
+        "ZMV: Fälligkeit und Beitragsnachweis"
+      ],
+      "muss_enthalten": [
+        "schätz|schaetz"
+      ]
+    },
+    {
+      "id": "F38",
+      "frage": "Enthält der Beitragsnachweis BNZ personenbezogene Daten?",
+      "erwartete_quelle": [
+        "ZMV: Inhalt des Zahlstellen-Beitragsnachweises",
+        "Beitragsnachweis an die Krankenkassen"
+      ],
+      "muss_enthalten": [
+        "summ"
+      ]
+    },
+    {
+      "id": "F39",
+      "frage": "Muss der Zusatzbeitrag im Beitragsnachweis getrennt ausgewiesen werden?",
+      "erwartete_quelle": [
+        "ZMV: Inhalt des Zahlstellen-Beitragsnachweises",
+        "Beitragsnachweis an die Krankenkassen"
+      ],
+      "muss_enthalten": [
+        "gesondert|separat|getrennt"
+      ]
+    },
+    {
+      "id": "F40",
+      "frage": "Schicken wir der Rentenversicherung monatlich Beitragsnachweise für Betriebsrentner?",
+      "erwartete_quelle": [
+        "Beitragsnachweis und die Rentenversicherung (DRV)"
+      ],
+      "muss_enthalten": [
+        "nicht|kein"
+      ]
+    },
+    {
+      "id": "F41",
+      "frage": "Wie oft prüft die DRV unsere Zahlstellen-Meldungen?",
+      "erwartete_quelle": [
+        "Beitragsnachweis und die Rentenversicherung (DRV)"
+      ],
+      "muss_enthalten": [
+        "4 jahre|vier jahre"
+      ]
+    },
+    {
+      "id": "F42",
+      "frage": "Melden wir die KV- und PV-Beiträge der Rentner selbst an das Finanzamt?",
+      "erwartete_quelle": [
+        "Datenübermittlung der Beiträge an das Finanzamt"
+      ],
+      "muss_enthalten": [
+        "krankenkasse"
+      ]
+    },
+    {
+      "id": "F43",
+      "frage": "Welche Frist gilt bei Neueinstellungen?",
+      "kategorie": "Fristen",
+      "erwartete_quelle": [
+        "DaBPV: Fristen bei Neueinstellungen",
+        "Verpflichtender Einsatz & Fristen"
+      ],
+      "muss_enthalten": [
+        "7"
+      ]
+    },
+    {
+      "id": "H01",
+      "frage": "Wie hoch ist 2026 der Freibetrag für Betriebsrenten in der Kranken- und Pflegeversicherung?",
+      "erwartete_quelle": [
+        "Grenzwerte und Freibeträge 2026",
+        "ZMV: Freibetrag vs Freigrenze KV/PV 2026"
+      ],
+      "muss_enthalten": [
+        "197,75"
+      ]
+    },
+    {
+      "id": "H02",
+      "frage": "Wie wird eine Einmalkapitalzahlung aus der Betriebsrente versteuert?",
+      "erwartete_quelle": [
+        "Versteuerung Einmalkapital",
+        "Rente vs Kapital"
+      ],
+      "muss_enthalten": [
+        "fünftel|fuenftel|§22|§ 22|sonstige"
+      ]
+    },
+    {
+      "id": "H03",
+      "frage": "Was passiert mit meiner Betriebsrente bei einem Arbeitgeberwechsel?",
+      "erwartete_quelle": [
+        "Arbeitgeberwechsel"
+      ],
+      "muss_enthalten": [
+        "unverfallbar|übertrag|uebertrag|übernehm"
+      ]
+    },
+    {
+      "id": "H04",
+      "frage": "Wann ist eine Anwartschaft auf Betriebsrente unverfallbar?",
+      "erwartete_quelle": [
+        "Arbeitgeberwechsel",
+        "Auszahlung Direktzusage - Einmalkapital"
+      ],
+      "muss_enthalten": [
+        "21",
+        "3 jahre|drei jahre"
+      ]
+    },
+    {
+      "id": "F44",
+      "frage": "Wie viele Meldegründe gibt es im Zahlstellen-Meldeverfahren?",
+      "erwartete_quelle": [
+        "ZMV: Die 4 Meldegründe im System"
+      ],
+      "muss_enthalten": [
+        "4|vier"
+      ]
+    },
+    {
+      "id": "F45",
+      "frage": "Wieviele Meldegründe gibt es in Penpay",
+      "erwartete_quelle": [
+        "ZMV: Die 4 Meldegründe im System"
+      ],
+      "muss_enthalten": [
+        "4|vier"
+      ]
+    },
+    {
+      "id": "N01",
+      "frage": "Wie backe ich einen Apfelkuchen mit Streuseln?",
+      "erwartet": "keine_fachinfo"
+    },
+    {
+      "id": "N02",
+      "frage": "Wer hat die Fußball-WM 2014 gewonnen?",
+      "erwartet": "keine_fachinfo"
+    },
+    {
+      "id": "N03",
+      "frage": "Wie wechsle ich einen Fahrradreifen?",
+      "erwartet": "keine_fachinfo"
+    },
+    {
+      "id": "N04",
+      "frage": "Was ist die Hauptstadt von Australien?",
+      "erwartet": "keine_fachinfo"
+    },
+    {
+      "id": "N05",
+      "frage": "Wie installiere ich Python unter Windows?",
+      "erwartet": "keine_fachinfo"
+    },
+    {
+      "id": "N06",
+      "frage": "Wie wird das Wetter morgen?",
+      "erwartet": "keine_fachinfo"
+    },
+    {
+      "id": "N07",
+      "frage": "Wie beantrage ich Urlaub im HR-Portal?",
+      "erwartet": "keine_fachinfo"
+    },
+    {
+      "id": "N08",
+      "frage": "Welches Gericht gibt es heute in der Kantine?",
+      "erwartet": "keine_fachinfo"
+    }
+  ]
+}

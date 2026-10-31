@@ -4,7 +4,7 @@
 
 - This is the Keycloak variant of the Betriebsrente FAQ Bot.
 - Start dependencies with `docker compose up -d postgres ollama keycloak-db keycloak`.
-- Pull Ollama models with `docker compose exec -T ollama ollama pull llama3.2:3b` and `docker compose exec -T ollama ollama pull nomic-embed-text`.
+- Pull Ollama models with `docker compose exec -T ollama ollama pull llama3.2:3b` and `docker compose exec -T ollama ollama pull nomic-embed-text-v2-moe`.
 - Build and start the app with `docker compose up --build -d app`.
 - App URL: `http://localhost:8091`; browser-facing Keycloak realm URL: `http://localhost:8180/realms/betriebsrente`.
 - Keycloak imports the realm from `keycloak/realm/betriebsrente-realm.json` on first startup.
