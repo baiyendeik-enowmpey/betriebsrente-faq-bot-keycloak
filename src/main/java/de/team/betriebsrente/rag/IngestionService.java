@@ -1,22 +1,22 @@
 package de.team.betriebsrente.rag;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.team.betriebsrente.model.Fachwissen;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import java.io.File;
 import java.util.*;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 public class IngestionService {
     private final VectorStore vectorStore;
     private final ChunkingService chunkingService;
     private final EntityManager em;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonMapper mapper = JsonMapper.builder().build();
 
     public IngestionService(VectorStore vectorStore, ChunkingService chunkingService, EntityManager em) {
         this.vectorStore = vectorStore;

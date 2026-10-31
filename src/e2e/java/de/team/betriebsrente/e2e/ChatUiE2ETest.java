@@ -5,7 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertTrue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
@@ -16,6 +16,7 @@ import com.microsoft.playwright.Route;
 import com.microsoft.playwright.options.AriaRole;
 import de.team.betriebsrente.controller.ChatController;
 import de.team.betriebsrente.rag.RagService;
+import de.team.betriebsrente.repository.FachwissenRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -123,8 +124,8 @@ public class ChatUiE2ETest {
 
     private String createChatResponse(RagService ragService) {
         try {
-            return new ObjectMapper().writeValueAsString(
-                    new ChatController(ragService).chat(Map.of("frage", QUESTION, "kategorie", "Steuer")));
+            return JsonMapper.builder().build().writeValueAsString(
+                    new ChatController(ragService, mock(FachwissenRepository.class)).chat(Map.of("frage", QUESTION, "kategorie", "Steuer")));
         } catch (Exception e) {
             throw new IllegalStateException("Could not create the stubbed chat response", e);
         }

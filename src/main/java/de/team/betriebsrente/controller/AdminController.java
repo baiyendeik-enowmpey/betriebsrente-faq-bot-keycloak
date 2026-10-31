@@ -6,6 +6,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +18,7 @@ import java.util.*;
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
     private final DocumentParserService parser;
     private final ChunkingService chunking;
     private final VectorStore vectorStore;
@@ -33,14 +37,13 @@ public class AdminController {
         List<Fachwissen> list = em.createQuery("SELECT f FROM Fachwissen f ORDER BY f.createdAt DESC", Fachwissen.class)
                 .setMaxResults(50).getResultList();
         model.addAttribute("dokumente", list);
-        // fallback if view not mapped - use native
         try {
-            Object cnt = em.createNativeQuery("SELECT COUNT(*) FROM fachwissen_chunks").getSingleResult();
+            Object cnt = em.createNativeQuery("SELECT COUNT(*) FROM vector_store").getSingleResult();
             model.addAttribute("chunkCount", cnt);
         } catch (Exception e) {
             model.addAttribute("chunkCount", "?");
         }
-        model.addAttribute("docCount", list.size());
+        model.addAttribute("docCount", em.createQuery("SELECT COUNT(f) FROM Fachwissen f").getSingleResult());
         return "admin";
     }
 
@@ -83,10 +86,10 @@ public class AdminController {
             resp.put("chars", parsedText.length());
             resp.put("chunks", chunks.size());
             resp.put("pages", parsed.pages());
-            resp.put("message", String.format("'%s' importiert: %d Zeichen -> %d Chunks (650 Tokens, 20%% Overlap)",
+            resp.put("message", String.format("'%s' importiert: %d Zeichen -> %d Chunks",
                     fw.getTitel(), parsedText.length(), chunks.size()));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Upload fehlgeschlagen: {}", file.getOriginalFilename(), e);
             resp.put("error", e.getMessage());
         }
         return resp;
@@ -97,12 +100,16 @@ public class AdminController {
     @ResponseBody
     public Map<String, String> delete(@PathVariable Long id) {
         try {
+            // Embeddings liegen in der Spring-AI-Tabelle vector_store (nicht in fachwissen_chunks).
+            // Ohne dieses Delete würden gelöschte Dokumente weiterhin als Quelle gefunden.
+            vectorStore.delete(new FilterExpressionBuilder().eq("fachwissen_id", id).build());
             em.createNativeQuery("DELETE FROM fachwissen_chunks WHERE fachwissen_id = :id").setParameter("id", id)
                     .executeUpdate();
             em.createQuery("DELETE FROM Fachwissen f WHERE f.id = :id").setParameter("id", id).executeUpdate();
             return Map.of("success", "gelöscht");
         } catch (Exception e) {
-            return Map.of("error", e.getMessage());
+            log.error("Löschen von Fachwissen {} fehlgeschlagen", id, e);
+            return Map.of("error", String.valueOf(e.getMessage()));
         }
     }
 }

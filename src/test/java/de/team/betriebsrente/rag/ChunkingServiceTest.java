@@ -15,7 +15,6 @@ class ChunkingServiceTest {
     void chunkAddsIndexesCountsAndTokenEstimates() {
         ChunkingService service = new ChunkingService();
         ReflectionTestUtils.setField(service, "chunkSize", 650);
-        ReflectionTestUtils.setField(service, "overlap", 130);
 
         var chunks = service.chunk(
                 "A short piece of pension guidance.", Objects.requireNonNull(Map.of("titel", "Guide")));

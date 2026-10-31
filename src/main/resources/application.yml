@@ -19,7 +19,8 @@ spring:
         options:
           model: llama3.2:3b
           temperature: 0.2
-          num-predict: 128
+          # 128 Tokens schnitten strukturierte Antworten (Kurzantwort + Details + Quelle) ab
+          num-predict: 384
       embedding:
         options:
           model: nomic-embed-text
@@ -31,7 +32,7 @@ spring:
         dimensions: 768
         remove-existing-vector-store-table: false
 app:
-  chunk: {size: 650, overlap: 130}
+  chunk: {size: 650}
   keycloak:
     issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/betriebsrente}
     backchannel-issuer-uri: ${KEYCLOAK_BACKCHANNEL_ISSUER_URI:http://keycloak:8080/realms/betriebsrente}

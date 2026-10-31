@@ -3,7 +3,7 @@ package de.team.betriebsrente.rag;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import java.util.*;
 
@@ -11,12 +11,16 @@ import java.util.*;
 public class ChunkingService {
     @Value("${app.chunk.size:650}")
     int chunkSize;
-    @Value("${app.chunk.overlap:130}")
-    int overlap;
 
     @NonNull
     public List<Document> chunk(@NonNull String originalText, @NonNull Map<String, Object> baseMetadata) {
-        TokenTextSplitter splitter = new TokenTextSplitter(chunkSize, 350, 5, 10000, true);
+        TokenTextSplitter splitter = TokenTextSplitter.builder()
+                .withChunkSize(chunkSize)
+                .withMinChunkSizeChars(350)
+                .withMinChunkLengthToEmbed(5)
+                .withMaxNumChunks(10000)
+                .withKeepSeparator(true)
+                .build();
         List<Document> docs = splitter.apply(List.of(new Document(originalText, baseMetadata)));
         List<Document> enriched = new ArrayList<>();
         for (int i = 0; i < docs.size(); i++) {

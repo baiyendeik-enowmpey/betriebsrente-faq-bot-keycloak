@@ -21,6 +21,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.mock.web.MockMultipartFile;
 
 class AdminControllerTest {
@@ -77,10 +78,14 @@ class AdminControllerTest {
         when(chunkQuery.executeUpdate()).thenReturn(1);
         when(documentQuery.executeUpdate()).thenReturn(1);
 
+        VectorStore vectorStore = mock(VectorStore.class);
+
         Map<String, String> result = new AdminController(
-                mock(DocumentParserService.class), mock(ChunkingService.class), mock(VectorStore.class), entityManager)
+                mock(DocumentParserService.class), mock(ChunkingService.class), vectorStore, entityManager)
                 .delete(23L);
 
         assertEquals("gelöscht", result.get("success"));
+        // Embeddings müssen aus dem Vector Store entfernt werden, sonst bleibt das Dokument als Quelle auffindbar.
+        verify(vectorStore).delete(new FilterExpressionBuilder().eq("fachwissen_id", 23L).build());
     }
 }

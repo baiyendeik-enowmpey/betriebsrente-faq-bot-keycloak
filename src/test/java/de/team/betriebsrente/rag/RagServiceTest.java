@@ -5,17 +5,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Objects;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 
 class RagServiceTest {
 
@@ -35,10 +39,14 @@ class RagServiceTest {
         stubChatResponse(request, response, "Answer");
         stubSimilaritySearch(vectorStore, List.of(matching, other));
 
-        RagService.Answer answer = new RagService(vectorStore, builder).ask("question", "steuer");
+        RagService.Answer answer = new RagService(vectorStore, builder).ask("question", "Steuer");
 
         assertEquals("Answer", answer.antwort());
         assertEquals(List.of(matching), answer.quellen());
+        ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
+        verify(vectorStore).similaritySearch(captor.capture());
+        assertEquals(new FilterExpressionBuilder().eq("kategorie", "Steuer").build(),
+                captor.getValue().getFilterExpression());
     }
 
     @Test
@@ -57,6 +65,9 @@ class RagServiceTest {
 
         RagService.Answer answer = new RagService(vectorStore, builder)
                 .ask("Beitragsnachweis und die Rentenversicherung.", "Alle");
+        ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
+        verify(vectorStore).similaritySearch(captor.capture());
+        assertNull(captor.getValue().getFilterExpression());
 
         assertEquals("Die DRV erhält keine monatlichen Beitragsnachweise.", answer.antwort());
         assertEquals(List.of(beitragsnachweis), answer.quellen());

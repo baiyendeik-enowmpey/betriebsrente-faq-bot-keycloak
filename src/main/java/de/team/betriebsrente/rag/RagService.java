@@ -4,6 +4,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,28 +19,36 @@ public class RagService {
                 this.chatClient = builder.build();
         }
 
+        static final int TOP_K = 3;
+        static final double SIMILARITY_THRESHOLD = 0.35;
+
         public record Answer(String antwort, List<Document> quellen) {
         }
 
         public Answer ask(String frage, String kategorieFilter) {
-                // Threshold von 0.72 -> 0.55 gesenkt, topK 6, sonst kommt bei leerer DB sofort
-                // "keine Fachinfo"
-                SearchRequest req = SearchRequest.builder()
-                                .query(frage == null ? "" : frage)
-                                .topK(3)
-                                .similarityThreshold(0.35) // niedriger = findet auch bei wenig Daten
-                                .build();
-                List<Document> docs = vectorStore.similaritySearch(req);
+                String query = frage == null ? "" : frage.strip();
+                SearchRequest.Builder req = SearchRequest.builder()
+                                .query(query)
+                                .topK(TOP_K)
+                                .similarityThreshold(SIMILARITY_THRESHOLD);
+
+                // Kategorie-Filter direkt in der Vektorsuche anwenden (statt die Top-K-Treffer
+                // nachträglich zu filtern, wodurch passende Dokumente verloren gingen).
+                boolean filterAktiv = kategorieFilter != null && !kategorieFilter.isBlank()
+                                && !"Alle".equalsIgnoreCase(kategorieFilter);
+                if (filterAktiv) {
+                        req.filterExpression(new FilterExpressionBuilder()
+                                        .eq("kategorie", kategorieFilter.strip()).build());
+                }
+                List<Document> docs = vectorStore.similaritySearch(req.build());
                 if (docs == null) {
                         docs = List.of();
                 }
-
-                // Wenn Filter gesetzt, nach kategorie filtern
-                if (kategorieFilter != null && !kategorieFilter.isBlank()
-                                && !"Alle".equalsIgnoreCase(kategorieFilter)) {
+                // Sicherheitsnetz (z.B. abweichende Groß-/Kleinschreibung bei Mock-/Fremd-Stores)
+                if (filterAktiv) {
                         docs = docs.stream()
-                                        .filter(d -> kategorieFilter
-                                                        .equalsIgnoreCase((String) d.getMetadata().get("kategorie")))
+                                        .filter(d -> kategorieFilter.strip()
+                                                        .equalsIgnoreCase(String.valueOf(d.getMetadata().get("kategorie"))))
                                         .toList();
                 }
 
@@ -68,7 +77,7 @@ public class RagService {
                 String ctxParam = context.isBlank() ? "KEIN KONTEXT" : context;
                 String antwort = chatClient.prompt()
                                 .system(s -> s.text(system).param("context", ctxParam))
-                                .user(frage == null ? "" : frage)
+                                .user(query)
                                 .call().content();
 
                 return new Answer(antwort, docs);

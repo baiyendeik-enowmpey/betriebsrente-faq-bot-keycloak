@@ -14,6 +14,8 @@ services:
     image: ollama/ollama:latest
     environment:
       OLLAMA_LOAD_TIMEOUT: 10m
+      # Modell im Speicher halten, sonst Kaltstart nach 5 Minuten Leerlauf
+      OLLAMA_KEEP_ALIVE: 24h
     ports: ["11435:11434"]
     volumes: [ollama_data:/root/.ollama]
   keycloak-db:
@@ -27,7 +29,13 @@ services:
       test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
       interval: 5s
   realm-init:
-    image: alpine:3
+    # Realm-Datei per Build-Kontext statt Bind-Mount: funktioniert auch, wenn das Projektlaufwerk
+    # nicht für Docker Desktop freigegeben ist.
+    build:
+      context: ./keycloak/realm
+      dockerfile_inline: |
+        FROM alpine:3
+        COPY betriebsrente-realm.json /in/betriebsrente-realm.json
     environment:
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-betriebsrente-app}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-local-keycloak-client-secret}
@@ -42,9 +50,9 @@ services:
         -e "s|$${KEYCLOAK_CLIENT_SECRET}|$$KEYCLOAK_CLIENT_SECRET|g"
         -e "s|$${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD}|$$KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD|g"
         -e "s|$${KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD}|$$KEYCLOAK_BOOTSTRAP_TEAM_PASSWORD|g"
-        /in/betriebsrente-realm.json > /out/betriebsrente-realm.json
+        /in/betriebsrente-realm.json > /out/.realm.tmp
+        && mv /out/.realm.tmp /out/betriebsrente-realm.json
     volumes:
-      - ./keycloak/realm:/in:ro
       - realm_rendered:/out
   keycloak:
     image: quay.io/keycloak/keycloak:26.7.3
