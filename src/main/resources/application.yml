@@ -39,6 +39,11 @@ app:
     # Mindestähnlichkeit für Kontext-Abschnitte – gilt nur für das konfigurierte Embedding-Modell!
     # nomic-embed-text-v2-moe: stabiler Bereich 0,33–0,39 (alle fachfremden Testfragen abgelehnt).
     similarity-threshold: 0.37
+    stichwortsuche:
+      # Hybride Suche: zusätzlich PostgreSQL-Volltext (deutsche Wortstämme). Ein starker Stichworttreffer
+      # (Titel oder mindestens 2 Fachbegriffe) lässt einen Abschnitt schon ab dieser Vektor-Ähnlichkeit zu.
+      aktiv: true
+      mindestaehnlichkeit: 0.20
   keycloak:
     issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/betriebsrente}
     backchannel-issuer-uri: ${KEYCLOAK_BACKCHANNEL_ISSUER_URI:http://keycloak:8080/realms/betriebsrente}

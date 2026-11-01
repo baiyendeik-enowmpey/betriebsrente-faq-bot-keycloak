@@ -98,6 +98,47 @@ class RagServiceTest {
         verifyNoInteractions(chatClient);
     }
 
+    @Test
+    void hybridSearchAdmitsStrongKeywordHitBelowVectorThresholdAndRanksByFusion() {
+        VectorStore vectorStore = mock(VectorStore.class);
+        ChatClient.Builder builder = mock(ChatClient.Builder.class);
+        when(builder.build()).thenReturn(mock(ChatClient.class));
+        StichwortSuche stichwort = mock(StichwortSuche.class);
+        Document fristen = scored("a", "Gesetzliche Meldefristen", 0.45);
+        Document grundlagen = scored("b", "ZMV: Grundlagen", 0.40);
+        Document meldegruende = scored("c", "ZMV: Die 4 Meldegründe im System", 0.23); // nur per Stichwort
+        Document rauschen = scored("d", "Grenzwerte 2026", 0.22); // weder Vektor- noch Stichworttreffer
+        stubSimilaritySearch(vectorStore, List.of(fristen, grundlagen, meldegruende, rauschen));
+        when(stichwort.suche("Wieviele Meldegründe gibt es in Penpay")).thenReturn(List.of(
+                new StichwortSuche.Treffer("c", "…", Map.of(), 3.03, List.of("meldegrund"))));
+
+        List<Document> quellen = new RagService(vectorStore, builder, stichwort, STICHTAG, 0.37, 0.20)
+                .sucheQuellen("Wieviele Meldegründe gibt es in Penpay", "Alle");
+
+        assertEquals(List.of("c", "a", "b"), quellen.stream().map(Document::getId).toList(),
+                "Stichworttreffer wird zugelassen und durch beide Ranglisten nach vorn sortiert");
+        SearchRequest search = captureSearchRequest(vectorStore);
+        assertEquals(RagService.VEKTOR_KANDIDATEN, search.getTopK());
+        assertEquals(0.20, search.getSimilarityThreshold(), "Vektorsuche liefert Kandidaten ab der Stichwort-Schwelle");
+    }
+
+    @Test
+    void hybridSearchRejectsWhenNeitherVectorNorKeywordQualifies() {
+        VectorStore vectorStore = mock(VectorStore.class);
+        ChatClient.Builder builder = mock(ChatClient.Builder.class);
+        when(builder.build()).thenReturn(mock(ChatClient.class));
+        StichwortSuche stichwort = mock(StichwortSuche.class);
+        stubSimilaritySearch(vectorStore, List.of(scored("a", "Einrichtung für Unternehmen", 0.31)));
+        when(stichwort.suche(anyString())).thenReturn(List.of());
+
+        assertEquals(List.of(), new RagService(vectorStore, builder, stichwort, STICHTAG, 0.37, 0.20)
+                .sucheQuellen("Wie beantrage ich Urlaub im HR-Portal?", "Alle"));
+    }
+
+    private static Document scored(String id, String titel, double score) {
+        return Document.builder().id(id).text(titel).metadata(Map.of("titel", titel)).score(score).build();
+    }
+
     // Mockito matchers return null sentinels during stubbing, which JDT cannot distinguish from runtime values.
     @SuppressWarnings("null")
     private static void stubChatResponse(ChatClient.ChatClientRequestSpec request,

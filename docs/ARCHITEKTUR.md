@@ -142,7 +142,7 @@ de.team.betriebsrente
 ├── eval/                            Qualitätsprüfung: EvalKatalog, EvalService, EvalRunner (CLI), QualitaetController
 ├── model/                           JPA-Entitäten: Fachwissen, FachwissenChunks, AuditLog, ChatHistory; Gueltigkeit
 ├── repository/                      FachwissenRepository
-└── rag/                             RagService, ChunkingService, DocumentParserService,
+└── rag/                             RagService, StichwortSuche, VektorIndexService, ChunkingService, DocumentParserService,
                                      IngestionService, SeedDataInitializer, SeedSyncService,
                                      AuditService, ChatExportService, OcrService
 ```
@@ -189,8 +189,11 @@ sequenceDiagram
     C->>C: Validierung (nicht leer, ≤ 2000 Zeichen) sonst 400
     C->>R: ask(frage, kategorie)
     R->>O: Embedding der Frage (nomic-embed-text)
-    R->>V: similaritySearch(topK=3, Schwelle 0.60,<br/>Filter: heute gültig (gueltig_ab ≤ heute ≤ gueltig_bis)<br/>und kategorie == X falls ≠ "Alle")
-    V-->>R: Top-Abschnitte inkl. Metadaten
+    R->>V: similaritySearch(topK=20, ab Ähnlichkeit 0.20,<br/>Filter: heute gültig (gueltig_ab ≤ heute ≤ gueltig_bis)<br/>und kategorie == X falls ≠ "Alle")
+    V-->>R: Vektor-Kandidaten inkl. Ähnlichkeit
+    R->>V: Stichwortsuche (PostgreSQL-Volltext, deutsche Wortstämme)
+    V-->>R: starke Stichworttreffer (Titel oder ≥ 2 Fachbegriffe, IDF-gewichtet)
+    R-->>R: zulassen: Ähnlichkeit ≥ 0.37 ODER starker Stichworttreffer<br/>Reihenfolge: Reciprocal Rank Fusion, Top 3
     alt keine gültigen Treffer
         R-->>R: fester Hinweis (Onboarding-Paten/Teamleiter), kein LLM-Aufruf
     else Treffer vorhanden
@@ -353,6 +356,7 @@ erDiagram
 | `app.chunk.size` | `650` | Abschnittsgröße in Tokens |
 | `app.keycloak.issuer-uri` / `backchannel-issuer-uri` | `localhost:8180` / `keycloak:8080` | Öffentlicher bzw. interner Keycloak |
 | `app.ocr.*` | `deu+eng` | OCR-Einstellungen (Service nicht angebunden) |
+| `app.rag.stichwortsuche.aktiv` / `.mindestaehnlichkeit` | `true` / `0.20` | Hybride Suche: Abschnitte mit starkem Stichworttreffer werden schon ab dieser Ähnlichkeit zugelassen. Gemessen: 100 % Treffer, 100 % Ablehnung |
 | `app.rag.similarity-threshold` | `0.37` | Mindestähnlichkeit der Kontextabschnitte, **modellabhängig**. Mit v2-moe stabil bei 0,33–0,39 (93,9 % Treffer, alle fachfremden Testfragen abgelehnt) |
 | `RagService.TOP_K` | `3` | Anzahl der Kontextabschnitte (im Code) |
 
@@ -362,7 +366,7 @@ erDiagram
 
 | Ebene | Umfang | Ausführung |
 |---|---|---|
-| Unit-Tests | 44 Tests (JUnit 5 + Mockito) für Controller, Services, Security | `mvn verify` (benötigt JDK 25) |
+| Unit-Tests | 48 Tests (JUnit 5 + Mockito) für Controller, Services, Security | `mvn verify` (benötigt JDK 25) |
 | UI-E2E | Playwright + TestNG für Chat und Admin, Backend-Antworten simuliert | `mvn -Pe2e … exec:java` (siehe README) |
 | Coverage | JaCoCo-Report in `target/site/jacoco` | Phase `verify` |
 | Qualitätsprüfung | `testdaten/eval_dataset.json`: 49 Fachfragen (erwartete Quelle + Pflichtbegriffe, inkl. aller „Häufigen Fragen“ des Chats), 8 fachfremde Fragen; `EvalService` misst Trefferquote der Suche, Ablehnungsquote und optional Antwortquote | Admin-Button „Qualität prüfen“ (Suche) oder `--eval [--eval-modus=antwort]` (Exit-Code) |
@@ -371,7 +375,7 @@ erDiagram
 
 ## 9. Bekannte Grenzen und nächste Schritte
 
-1. **Suche:** Mit `nomic-embed-text-v2-moe` findet die Suche bei 46 von 49 Testfragen die richtige Quelle (vorher 39). Fragen nach wörtlichen Begriffen („Wie viele Meldegründe …“) verfehlt sie noch – Abhilfe: hybride Suche (Vektor + PostgreSQL-Volltext).
+1. **Suche:** Hybride Suche (`nomic-embed-text-v2-moe` + PostgreSQL-Volltext) findet bei allen 49 Testfragen die richtige Quelle und lehnt alle fachfremden ab. Die Stichwortregeln wurden am selben Katalog entwickelt – neue, echte Kollegenfragen in den Katalog aufnehmen, um Überanpassung zu erkennen. Deutsche Komposita (z. B. „Rentenanpassung“) zerlegt die Volltextsuche nicht; die Stichwortsuche rechnet die Wortstämme bei jeder Anfrage über alle Abschnitte (bei einigen Tausend Abschnitten → generierte Spalte + GIN-Index).
 2. **Sprachmodell:** `llama3.2:3b` widerspricht in Einzelfällen dem gefundenen Kontext oder lehnt trotz passender Quelle ab (Antwortmodus der Qualitätsprüfung).
 3. **Antwortzeit:** Die Inferenz läuft nur auf der CPU. Mit 6 vCPUs/8 GB dauert eine Antwort etwa 20–60 s, unter 5 s geht es nur mit GPU.
 4. **Nicht angebundene Funktionen:** `AuditService` (Audit-Log, Chatverlauf), `ChatExportService` (PDF-Export) und `OcrService` (gescannte PDFs) sind implementiert, werden aber nirgends aufgerufen.
